@@ -29,7 +29,7 @@ export default function ForecastPage() {
   const today = fmtDay(sc.dates[0]);
 
   return (
-    <div className="grid h-full grid-cols-[minmax(0,1fr)_404px] gap-2.5 p-2.5">
+    <div className="grid h-full grid-rows-[minmax(0,1fr)] grid-cols-[minmax(0,1fr)_404px] gap-2.5 p-2.5">
       <div className="flex min-h-0 min-w-0 flex-col gap-2.5">
         <div className="flex shrink-0 items-center gap-3">
           <div className="flex rounded-[5px] border border-line-2 p-0.5">

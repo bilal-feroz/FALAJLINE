@@ -24,7 +24,7 @@ export default function OperationsPage() {
   const zone = sc.zones.find((z) => z.id === target);
 
   return (
-    <div className="grid h-full grid-cols-[minmax(0,1fr)_372px] gap-2.5 p-2.5">
+    <div className="grid h-full grid-rows-[minmax(0,1fr)] grid-cols-[minmax(0,1fr)_372px] gap-2.5 p-2.5">
       <div className="flex min-h-0 min-w-0 flex-col gap-2.5">
         <KpiStrip />
         <div className="min-h-0 flex-1">

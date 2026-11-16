@@ -20,7 +20,7 @@ export default function AlertsPage() {
   };
 
   return (
-    <div className="grid h-full grid-cols-[336px_minmax(0,1fr)_388px] gap-2.5 p-2.5">
+    <div className="grid h-full grid-rows-[minmax(0,1fr)] grid-cols-[336px_minmax(0,1fr)_388px] gap-2.5 p-2.5">
       <div className="flex min-h-0 flex-col gap-2.5">
         <WarningCards selected={current?.id ?? null} onSelect={pick} />
         <Notices />
