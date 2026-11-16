@@ -74,29 +74,16 @@ def _classify(status: int, body: str) -> MeteomaticsError:
     return MeteomaticsError("server", f"Meteomatics server error (HTTP {status}).", status)
 
 
-def fetch(
-    settings: Settings,
-    *,
-    start: datetime,
-    end: datetime,
-    step: str,
-    parameters: list[str],
-    locations: list[dict],
-    transport: httpx.BaseTransport | None = None,
-    attempts: int = 3,
-) -> QueryResult:
-    """Run one query. Retries only transient failures (network errors, 5xx)."""
+def _request(settings: Settings, path: str, transport: httpx.BaseTransport | None, attempts: int = 3) -> tuple[httpx.Response, int]:
+    """One authenticated GET with retries for transient failures (network errors, 5xx)."""
     if usage_today() >= settings.weather_daily_query_budget:
         raise MeteomaticsError("budget", f"Local daily query budget of {settings.weather_daily_query_budget} reached; not calling the API.")
-
-    coords = "+".join(f"{loc['lat']},{loc['lon']}" for loc in locations)
-    path = f"/{_iso(start)}--{_iso(end)}:{step}/{','.join(parameters)}/{coords}/json"
     url = settings.meteomatics_base_url + path
     last: MeteomaticsError | None = None
     for attempt in range(attempts):
         t0 = time.perf_counter()
         try:
-            with httpx.Client(transport=transport, timeout=httpx.Timeout(25.0, connect=10.0)) as client:
+            with httpx.Client(transport=transport, timeout=httpx.Timeout(30.0, connect=10.0)) as client:
                 resp = client.get(url, auth=(settings.meteomatics_username, settings.meteomatics_password))
             _count_query()
         except httpx.HTTPError as exc:
@@ -110,13 +97,88 @@ def fetch(
             continue
         if resp.status_code != 200:
             raise _classify(resp.status_code, resp.text)
-        try:
-            body = resp.json()
-        except ValueError as exc:
-            raise MeteomaticsError("server", "Meteomatics returned a response that is not valid JSON.") from exc
-        return QueryResult(path=path, generated_at=body.get("dateGenerated"), series=_parse(body, len(locations)), elapsed_ms=elapsed)
+        return resp, elapsed
     assert last is not None
     raise last
+
+
+def fetch(
+    settings: Settings,
+    *,
+    start: datetime,
+    end: datetime,
+    step: str,
+    parameters: list[str],
+    locations: list[dict],
+    transport: httpx.BaseTransport | None = None,
+    attempts: int = 3,
+) -> QueryResult:
+    """Point time series for one or more locations (JSON format)."""
+    coords = "+".join(f"{loc['lat']},{loc['lon']}" for loc in locations)
+    span = _iso(start) if start == end else f"{_iso(start)}--{_iso(end)}:{step}"
+    path = f"/{span}/{','.join(parameters)}/{coords}/json"
+    resp, elapsed = _request(settings, path, transport, attempts)
+    try:
+        body = resp.json()
+    except ValueError as exc:
+        raise MeteomaticsError("server", "Meteomatics returned a response that is not valid JSON.") from exc
+    return QueryResult(path=path, generated_at=body.get("dateGenerated"), series=_parse(body, len(locations)), elapsed_ms=elapsed)
+
+
+@dataclass
+class GridResult:
+    path: str
+    valid: datetime
+    lats: list[float]  # north to south
+    lons: list[float]  # west to east
+    values: list[list[float | None]]  # [lat][lon]
+    elapsed_ms: int
+
+
+def fetch_grid(
+    settings: Settings,
+    *,
+    when: datetime,
+    parameter: str,
+    lat_max: float,
+    lon_min: float,
+    lat_min: float,
+    lon_max: float,
+    res: float,
+    transport: httpx.BaseTransport | None = None,
+) -> GridResult:
+    """A gridded field for one time (CSV matrix format: one query, compact)."""
+    path = f"/{_iso(when)}/{parameter}/{lat_max},{lon_min}_{lat_min},{lon_max}:{res},{res}/csv"
+    resp, elapsed = _request(settings, path, transport)
+    lats: list[float] = []
+    lons: list[float] = []
+    values: list[list[float | None]] = []
+    for line in resp.text.splitlines():
+        cells = line.strip().split(";")
+        if not cells or not cells[0]:
+            continue
+        if cells[0] == "data":
+            lons = [float(c) for c in cells[1:] if c]
+            continue
+        if cells[0] in {"validdate", "parameter"}:
+            continue
+        try:
+            lat = float(cells[0])
+        except ValueError:
+            continue
+        row = []
+        for c in cells[1:1 + len(lons)]:
+            try:
+                v = float(c)
+                row.append(None if v <= MISSING_SENTINEL else v)
+            except ValueError:
+                row.append(None)
+        lats.append(lat)
+        values.append(row)
+    if not lats or not lons:
+        raise MeteomaticsError("server", "Meteomatics returned an empty grid.")
+    order = sorted(range(len(lats)), key=lambda i: -lats[i])  # north first
+    return GridResult(path=path, valid=when, lats=[lats[i] for i in order], lons=lons, values=[values[i] for i in order], elapsed_ms=elapsed)
 
 
 def _parse(body: dict, n_locations: int) -> dict[str, list[list[tuple[datetime, float | None]]]]:

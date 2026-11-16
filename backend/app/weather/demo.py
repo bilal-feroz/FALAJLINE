@@ -42,6 +42,11 @@ def synth_day(day: date, location_id: str) -> dict:
         "t_min_c": round(t_min, 1),
         "rh_mean_pct": round(max(12.0, min(95.0, _interp(_RH, day) - 5.0 * w)), 1),
         "wind_mean_ms": round(max(0.5, _interp(_WIND, day) + 0.5 * _wobble(day, salt + 4.0)), 1),
+        "wind_dir_deg": round((315.0 + 40.0 * _wobble(day, salt + 7.0)) % 360.0, 0),  # prevailing north-westerly shamal
+        "gust_max_ms": round(max(2.0, 2.0 * _interp(_WIND, day) + 1.2 * _wobble(day, salt + 5.0)), 1),
+        "cloud_pct": round(max(0.0, 12.0 + 10.0 * _wobble(day, salt + 9.0)), 0),
+        "prob_precip_pct": None,
+        "soil_moisture_idx": None,
         "rad_mean_w": round(_interp(_RAD, day) * (1 - 0.04 * max(0.0, -w)), 1),
         "precip_mm": 0.0,
         "evaporation_mm": None,
