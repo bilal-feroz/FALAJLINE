@@ -267,6 +267,7 @@ def _risk_levels(res: ForecastResult) -> np.ndarray:
         lvl = np.where(p_any >= r.watch_probability, 1, np.where(thin, 1, 0))
         lvl = np.where(p_prep >= r.prepare_probability, 2, lvl)
         lvl = np.where(p_act >= r.act_probability, 3, lvl)
+        lvl = np.where(central[day] < r.required_supply_ratio, 3, lvl)  # best estimate is already short that day
         levels[day] = lvl
     return levels
 
