@@ -39,6 +39,7 @@ interface Store {
   layers: Layers;
   camera: { preset: CameraPreset; zone?: string; nonce: number };
   intro: "pending" | "playing" | "done";
+  film: boolean; // ?film: the twin alone, no interface, for recordings
   introRun: number;
   tour: { running: boolean; step: number; caption: Caption | null; highlight: string | null };
   guide: { open: boolean; step: number }; // the step-by-step onboarding
@@ -106,6 +107,7 @@ export const useStore = create<Store>((set, get) => ({
   layers: { gauges: true, flow: true, labels: true, wells: false },
   camera: { preset: "system", nonce: 0 },
   intro: "pending",
+  film: false,
   introRun: 0,
   tour: { running: false, step: 0, caption: null, highlight: null },
   guide: { open: false, step: 0 },

@@ -79,6 +79,7 @@ const lerpAngle = (a: number, b: number, t: number) => {
 };
 
 export const INTRO = { END: 13.2, UI_AT: 11.6 };
+const UP = new THREE.Vector3(0, 1, 0);
 const [AX, AZ] = toXZ(54.25, 24.32); // over the UAE
 const START: Pose = { target: new THREE.Vector3(AX, -320, AZ), r: 880e3, polar: 0.0002, az: 0 };
 
@@ -158,7 +159,7 @@ export function CameraRig({ net, dem }: { net: Net; dem: Dem }) {
     if (!controls || intro !== "done") return;
     if (cam.preset === "free") return;
     const to = presetPose(cam.preset, net, dem, cam.zone);
-    flight.current = { t: 0, dur: cam.preset === "zone" ? 1.6 : 2.0, from: currentPose(camera, controls.target), to };
+    flight.current = { t: 0, dur: frame.flightTime || (cam.preset === "zone" ? 1.6 : 2.0), from: currentPose(camera, controls.target), to };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cam.nonce, controls]);
 
@@ -218,6 +219,14 @@ export function CameraRig({ net, dem }: { net: Net; dem: Dem }) {
       }
     } else {
       controls.enabled = !st.tour.running;
+      // slow cinematic moves for recordings: time-based, so they stay even when the frame rate wobbles
+      if (frame.orbit || frame.dolly) {
+        const off = camera.position.clone().sub(controls.target);
+        if (frame.orbit) off.applyAxisAngle(UP, frame.orbit * dt);
+        if (frame.dolly) off.multiplyScalar(Math.max(0.2, 1 + frame.dolly * dt));
+        camera.position.copy(controls.target).add(off);
+        camera.lookAt(controls.target);
+      }
       // keep the focus inside the terrain
       controls.target.x = THREE.MathUtils.clamp(controls.target.x, -14000, 16000);
       controls.target.z = THREE.MathUtils.clamp(controls.target.z, -14000, 14000);
@@ -226,9 +235,9 @@ export function CameraRig({ net, dem }: { net: Net; dem: Dem }) {
     // ---- keep the scene centred in the space the panels leave free
     let left = 0;
     let right = 0;
-    let bottom = 108;
-    const top = 72;
-    if (st.intro === "done") {
+    let bottom = st.film ? 0 : 108;
+    const top = st.film ? 0 : 72;
+    if (st.intro === "done" && !st.film) {
       if (st.mode === "overview") {
         left = 428;
         if (st.selection) right = 428;

@@ -43,7 +43,8 @@ export function LabelProjector() {
       const on = v.z > -1 && v.z < 1 && Math.abs(v.x) < 1.2 && Math.abs(v.y) < 1.2;
       const py = (-v.y * 0.5 + 0.5) * size.height;
       // keep labels out from under the top bar and the timeline
-      const safe = Math.min(1, Math.max(0, (py - 84) / 36)) * Math.min(1, Math.max(0, (size.height - 118 - py) / 36));
+      const film = useStore.getState().film;
+      const safe = Math.min(1, Math.max(0, (py - (film ? 24 : 84)) / 36)) * Math.min(1, Math.max(0, (size.height - (film ? 24 : 118) - py) / 36));
       const o = on ? a.vis() * safe : 0;
       el.style.opacity = o.toFixed(3);
       el.style.visibility = o < 0.01 ? "hidden" : "visible";
@@ -89,6 +90,7 @@ export function LabelLayer({ net, dem }: { net: Net; dem: Dem }) {
   const day = useStore((s) => s.day);
   const layers = useStore((s) => s.layers);
   const selection = useStore((s) => s.selection);
+  const film = useStore((s) => s.film);
   const near = (max: number) => () => 1 - smooth(max * 0.7, max, frame.altitude);
   const far = (min: number) => () => smooth(min, min * 1.4, frame.altitude);
   const built = (from: number) => () => smooth(from, from + 0.15, frame.reveal);
@@ -100,8 +102,8 @@ export function LabelLayer({ net, dem }: { net: Net; dem: Dem }) {
 
   return (
     <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden">
-      {/* the regional map of the opening sequence */}
-      {CITIES.map((c) => {
+      {/* the regional map of the opening sequence (a recording sets its own type over it) */}
+      {!film && CITIES.map((c) => {
         const [x, z] = toXZ(c.lon, c.lat);
         return (
           <Label key={c.name} align="left" anchor={{ pos: () => [x, -260, z], vis: () => frame.region * smooth(40000, 90000, frame.altitude) }}>

@@ -8,7 +8,7 @@ import { useScenario, useStore } from "@/lib/store";
 import { CameraRig } from "./CameraRig";
 import { loadDem, type Dem } from "./dem";
 import { easeFrame, frame } from "./frame";
-import { distanceToPolyline, pointInPolygon, seeded } from "./geo";
+import { distanceToPolyline, pointInPolygon, seeded, toXZ } from "./geo";
 import { Gauges } from "./Gauges";
 import { canopyPoints, CORE, FAR, loadMosaic, NEAR, type Mosaic } from "./imagery";
 import { LabelLayer, LabelProjector } from "./Labels";
@@ -17,6 +17,7 @@ import { Network } from "./Network";
 import { buildNet, type Net } from "./net";
 import { Palms, type Palm } from "./Palms";
 import { Region } from "./Region";
+import { screen } from "./screen";
 import { buildProfile } from "./section";
 import { Lights, Rain, Sky } from "./Sky";
 import { Terrain, terrainUniforms } from "./Terrain";
@@ -60,10 +61,14 @@ function FrameDriver() {
 /** Debug and recording hook: the live camera next to the frame state. */
 function ExposeCamera() {
   const camera = useThree((s) => s.camera);
+  const controls = useThree((s) => s.controls);
   useEffect(() => {
     const w = window as unknown as { __falaj?: Record<string, unknown> };
-    if (w.__falaj) w.__falaj.camera = camera;
-  }, [camera]);
+    if (w.__falaj) {
+      w.__falaj.camera = camera;
+      w.__falaj.controls = controls;
+    }
+  }, [camera, controls]);
   return null;
 }
 
@@ -160,7 +165,7 @@ function useTwinAssets(net: Net | null) {
 
 if (typeof window !== "undefined") {
   // handy in the browser console and for scripted recordings
-  (window as unknown as { __falaj: unknown }).__falaj = { frame, store: useStore, terrain: terrainUniforms };
+  (window as unknown as { __falaj: unknown }).__falaj = { frame, store: useStore, terrain: terrainUniforms, screen, toXZ };
 }
 
 export default function TwinScene() {

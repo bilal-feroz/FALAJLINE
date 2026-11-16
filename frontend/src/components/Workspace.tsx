@@ -32,6 +32,7 @@ export function Workspace() {
   const loadField = useStore((s) => s.loadField);
 
   useEffect(() => {
+    if (new URLSearchParams(window.location.search).has("film")) useStore.setState({ film: true });
     void load();
     void loadField();
     const id = setInterval(() => void useStore.getState().load(), 90_000);
@@ -71,7 +72,7 @@ export function Workspace() {
     if (intro !== "done") return;
     const params = new URLSearchParams(window.location.search);
     const force = params.has("guide");
-    if (!force && (wasGuided() || params.has("skip") || params.has("present"))) return;
+    if (!force && (wasGuided() || params.has("skip") || params.has("present") || params.has("film"))) return;
     const id = setTimeout(() => {
       if (!useStore.getState().tour.running) useStore.getState().setGuide({ open: true, step: 0 });
     }, force ? 300 : 900);
@@ -84,12 +85,13 @@ export function Workspace() {
     return () => clearInterval(id);
   }, []);
 
+  const film = useStore((s) => s.film);
   const ready = status === "ready" && intro === "done";
   return (
     <div className="relative h-full w-full overflow-hidden bg-ink grain">
       <TwinScene />
       <Intro />
-      {ready && (
+      {ready && !film && (
         <div className="pointer-events-none absolute inset-0 z-20">
           <TopBar />
           {mode === "overview" && <Overview />}
@@ -107,7 +109,7 @@ export function Workspace() {
         </div>
       )}
       {ready && (
-        <div className="pointer-events-none absolute bottom-[96px] right-6 z-10 font-mono text-[10px] uppercase tracking-[0.12em] text-ink/70 mix-blend-multiply">
+        <div className={`pointer-events-none absolute z-10 font-mono text-[10px] uppercase tracking-[0.12em] text-ink/70 mix-blend-multiply ${film ? "right-4 top-3" : "bottom-[96px] right-6"}`}>
           Sentinel-2 cloudless 2023 by EOX · imagery © Esri, Maxar, Earthstar Geographics · SRTM · OpenStreetMap
         </div>
       )}

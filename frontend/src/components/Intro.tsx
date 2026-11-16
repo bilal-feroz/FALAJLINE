@@ -45,7 +45,8 @@ export function Intro() {
     };
   }, [intro]);
 
-  if (intro === "done") return null;
+  const film = useStore.getState().film;
+  if (intro === "done" || (film && intro === "playing")) return null;
 
   if (intro === "pending") {
     const steps = [status === "ready", assets.dem, assets.far, field !== null];

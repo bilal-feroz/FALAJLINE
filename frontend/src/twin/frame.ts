@@ -26,6 +26,10 @@ export const frame = {
   terrain: 1, // opacity of the satellite terrain
   space: 0, // 0 = atmosphere, 1 = black space
   altitude: 0,
+  // recording moves, in radians a second and fraction of the distance a second (0 = still)
+  orbit: 0,
+  dolly: 0,
+  flightTime: 0, // seconds for camera flights; 0 = the interface's own pace
   targets: {
     head: 1,
     head0: 1,
