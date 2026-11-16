@@ -77,6 +77,7 @@ const strataUniforms = {
   uScale: { value: HEAD_SCALE },
   uGrad: { value: WT_GRADIENT },
   uLight: { value: new THREE.Vector3(-0.35, 0.6, 0.72).normalize() },
+  uFlip: { value: -1.0 }, // the scene group is mirrored in x; the shader works in scene space
 };
 
 const strataMaterial = new THREE.ShaderMaterial({
@@ -95,7 +96,7 @@ const strataMaterial = new THREE.ShaderMaterial({
   fragmentShader: /* glsl */ `
     varying vec3 vWorld;
     varying vec3 vNormal;
-    uniform float uHead, uHead0, uWellX, uInv, uScale, uGrad;
+    uniform float uHead, uHead0, uWellX, uInv, uScale, uGrad, uFlip;
     uniform vec3 uLight;
     float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
     float noise(vec2 p) {
@@ -104,7 +105,8 @@ const strataMaterial = new THREE.ShaderMaterial({
       return mix(mix(hash(i), hash(i + vec2(1, 0)), f.x), mix(hash(i + vec2(0, 1)), hash(i + vec2(1, 1)), f.x), f.y);
     }
     void main() {
-      float along = vWorld.x + vWorld.z;
+      float sx = vWorld.x * uFlip;
+      float along = sx + vWorld.z;
       float y = vWorld.y;
       float warp = noise(vec2(along * 0.08, y * 0.3)) * 2.2;
       float bands = noise(vec2(along * 0.05, (y + warp) * 1.6));
@@ -114,8 +116,8 @@ const strataMaterial = new THREE.ShaderMaterial({
       vec3 col = mix(lower, upper, smoothstep(-17.0, 6.0, y));
       col *= 0.78 + 0.26 * bands + 0.10 * pebbles;
 
-      float wt = uInv + uHead * uScale - uGrad * (vWorld.x - uWellX);
-      float wt0 = uInv + uHead0 * uScale - uGrad * (vWorld.x - uWellX);
+      float wt = uInv + uHead * uScale - uGrad * (sx - uWellX);
+      float wt0 = uInv + uHead0 * uScale - uGrad * (sx - uWellX);
       float sat = smoothstep(wt + 0.04, wt - 0.5, y);
       vec3 wet = col * vec3(0.34, 0.70, 0.86) + vec3(0.00, 0.05, 0.075);
       col = mix(col, wet, sat * 0.88);

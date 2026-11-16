@@ -86,7 +86,7 @@ function Channel({ path, showFlow, selected }: { path: PathDef; showFlow: boolea
   return (
     <group>
       <mesh geometry={bed} scale={[1, 0.34, 1]} position={[0, 0.03, 0]} castShadow receiveShadow onClick={click(path.component)} {...pointer}>
-        <meshStandardMaterial color={selected ? "#b9a988" : STONE} roughness={0.95} />
+        <meshStandardMaterial color={selected ? "#b9a988" : STONE} roughness={0.95} side={THREE.DoubleSide} />
       </mesh>
       <mesh geometry={stream} scale={[1, 0.3, 1]} position={[0, 0.13, 0]}>
         <meshStandardMaterial ref={water} color="#1f8f95" emissive={WATER} emissiveIntensity={0.8} transparent opacity={0.9} roughness={0.25} />
@@ -119,7 +119,7 @@ function MotherWell({ underground, selected }: { underground: boolean; selected:
       {/* stone collar at the surface */}
       <mesh position={[0, top + 0.25, 0]} rotation={[Math.PI / 2, 0, 0]} castShadow>
         <torusGeometry args={[1.25, 0.3, 8, 22]} />
-        <meshStandardMaterial color={selected ? "#d8c7a3" : "#978a72"} roughness={0.9} />
+        <meshStandardMaterial color={selected ? "#d8c7a3" : "#978a72"} roughness={0.9} side={THREE.DoubleSide} />
       </mesh>
       {underground && (
         <>
@@ -129,7 +129,7 @@ function MotherWell({ underground, selected }: { underground: boolean; selected:
           </mesh>
           <mesh ref={column}>
             <cylinderGeometry args={[0.82, 0.82, 1, 18]} />
-            <meshStandardMaterial color="#1b7f8f" emissive={WATER} emissiveIntensity={0.55} transparent opacity={0.85} />
+            <meshStandardMaterial color="#1b7f8f" emissive={WATER} emissiveIntensity={0.55} transparent opacity={0.85} side={THREE.DoubleSide} />
           </mesh>
           <mesh ref={level} rotation={[Math.PI / 2, 0, 0]}>
             <torusGeometry args={[1.12, 0.07, 6, 28]} />
@@ -223,6 +223,7 @@ function SensorPost({ sensor, position, selected }: { sensor: Sensor; position: 
       {/* generous invisible hit area */}
       <mesh position={[0, 1.1, 0]} visible={false}>
         <cylinderGeometry args={[0.7, 0.7, 2.4, 8]} />
+        <meshBasicMaterial side={THREE.DoubleSide} />
       </mesh>
     </group>
   );

@@ -135,7 +135,7 @@ function Zone({ index, showRisk }: { index: number; showRisk: boolean }) {
         }}
         {...pointer}
       >
-        <meshStandardMaterial color="#35432c" roughness={1} />
+        <meshStandardMaterial color="#35432c" roughness={1} side={THREE.DoubleSide} />
       </mesh>
       <lineSegments geometry={bunds}>
         <lineBasicMaterial color="#6d6248" transparent opacity={0.55} />
