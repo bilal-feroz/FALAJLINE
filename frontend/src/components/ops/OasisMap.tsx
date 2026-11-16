@@ -114,7 +114,8 @@ export default function OasisMap() {
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
     map.addControl(new maplibregl.ScaleControl({ maxWidth: 110, unit: "metric" }), "bottom-right");
 
-    map.on("load", () => {
+    // "style.load" fires as soon as the style is ready, so the overlays appear without waiting for imagery tiles
+    map.once("style.load", () => {
       const empty = fc([]);
       map.addSource("zones", { type: "geojson", data: empty });
       map.addSource("network", { type: "geojson", data: empty });
