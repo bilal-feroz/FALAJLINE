@@ -19,7 +19,7 @@ Two processes: a Python API and a Next.js front end. Nothing else is required, a
 ```bash
 cd backend
 python -m venv .venv
-.venv/Scripts/python -m pip install -r requirements.txt      # macOS/Linux: .venv/bin/python
+.venv/Scripts/python -m pip install -r requirements-dev.txt  # macOS/Linux: .venv/bin/python
 cp .env.example .env                                         # then add your Meteomatics credentials
 .venv/Scripts/python -m uvicorn app.main:app --port 8000
 ```

@@ -1,0 +1,4 @@
+# Offline data preparation only (scripts/): not needed to run the API.
+-r requirements.txt
+rasterio>=1.4
+pillow>=10

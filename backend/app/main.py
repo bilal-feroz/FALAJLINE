@@ -6,17 +6,17 @@ import time
 from datetime import datetime, timezone
 
 import httpx
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from pydantic import BaseModel, Field
 
 from . import engine
-from .alerts.queue import QUEUE
 from .config import CACHE_DIR, SETTINGS
 from .geo import EAD_WELLS_URL, build_geography
 from .model.params import default_params
 from .weather import meteomatics
-from .weather.service import get_weather
+from .weather.service import get_field, get_history, get_weather
 
 app = FastAPI(title="FALAJLINE", version="0.1.0", description="Early warning intelligence for the falaj irrigation systems of Al Ain Oasis.")
 app.add_middleware(
@@ -25,6 +25,27 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(GZipMiddleware, minimum_size=2048)
+
+# Shared CDN caching (Vercel edge): every visitor sees the same live data, and the weather API is called rarely.
+CACHE_RULES = {
+    "/api/state": "public, max-age=0, s-maxage=60, stale-while-revalidate=600",
+    "/api/weather/field": "public, max-age=600, s-maxage=3600, stale-while-revalidate=21600",
+    "/api/weather/history": "public, max-age=600, s-maxage=3600, stale-while-revalidate=43200",
+    "/api/geo/ead-wells": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800",
+    "/api/network": "public, max-age=3600, s-maxage=86400",
+}
+
+
+@app.middleware("http")
+async def cache_headers(request: Request, call_next):
+    response = await call_next(request)
+    rule = CACHE_RULES.get(request.url.path)
+    if rule and request.method == "GET" and response.status_code == 200:
+        response.headers["Cache-Control"] = rule
+    elif request.url.path.startswith("/api/"):
+        response.headers.setdefault("Cache-Control", "no-store")
+    return response
 
 _last_weather_refresh = 0.0
 
@@ -34,7 +55,6 @@ def _state(faults: str | None, demand_reduction: float, loss_reduction: float) -
         bundle = engine.get_state(faults, demand_reduction, loss_reduction)
     except ValueError as exc:  # e.g. no valid source observations at all
         raise HTTPException(status_code=503, detail=str(exc)) from exc
-    QUEUE.sync(bundle["warnings"]["warnings"])
     return bundle
 
 
@@ -57,13 +77,25 @@ def state(
     loss_reduction: float = Query(0.45, ge=0.0, le=0.9),
 ) -> dict:
     """Everything the UI needs in one response."""
-    return {**_state(faults, demand_reduction, loss_reduction), "queue": QUEUE.snapshot()}
+    return _state(faults, demand_reduction, loss_reduction)
 
 
 @app.get("/api/weather")
 def weather() -> dict:
     """Weather bundle: live Meteomatics data when configured (cached), otherwise labelled demo data."""
     return get_weather()
+
+
+@app.get("/api/weather/field")
+def weather_field() -> dict:
+    """Today's evaporative demand (reference ET, mm/day) over the UAE on a 0.05° grid, from Meteomatics."""
+    return get_field()
+
+
+@app.get("/api/weather/history")
+def weather_history() -> dict:
+    """Daily rainfall over the last 365 days at the oasis and the recharge area, summarised."""
+    return get_history()
 
 
 @app.post("/api/weather/refresh")
@@ -114,35 +146,6 @@ def scenarios(req: ScenarioRequest) -> dict:
 @app.get("/api/warnings")
 def warnings(faults: str | None = None) -> dict:
     return _state(faults, 0.15, 0.45)["warnings"]
-
-
-# -- simulated delivery queue ------------------------------------------------
-@app.get("/api/alerts/queue")
-def queue() -> dict:
-    return QUEUE.snapshot()
-
-
-class LinkRequest(BaseModel):
-    online: bool
-
-
-@app.post("/api/alerts/queue/link")
-def queue_link(req: LinkRequest) -> dict:
-    QUEUE.set_link(req.online)
-    return QUEUE.snapshot()
-
-
-@app.post("/api/alerts/queue/retry/{message_id:path}")
-def queue_retry(message_id: str) -> dict:
-    if not QUEUE.retry(message_id):
-        raise HTTPException(status_code=409, detail="Only failed messages can be retried.")
-    return QUEUE.snapshot()
-
-
-@app.post("/api/alerts/queue/redispatch")
-def queue_redispatch() -> dict:
-    QUEUE.redispatch()
-    return QUEUE.snapshot()
 
 
 # -- public groundwater monitoring wells (real locations, no levels) -----------

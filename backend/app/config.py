@@ -2,12 +2,12 @@
 from __future__ import annotations
 
 import os
+import tempfile
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
-CACHE_DIR = BACKEND_DIR / ".cache"
 
 # Gulf Standard Time. A fixed offset avoids needing the tz database on Windows; the UAE has no DST.
 UAE_TZ = timezone(timedelta(hours=4), "GST")
@@ -28,6 +28,28 @@ def _load_env_file(path: Path) -> None:
 
 
 _load_env_file(BACKEND_DIR / ".env")
+
+
+def _cache_dir() -> Path:
+    """Writable cache folder: backend/.cache locally, the temp dir on read-only hosts such as Vercel."""
+    override = os.environ.get("FALAJLINE_CACHE_DIR", "").strip()
+    if override:
+        return Path(override)
+    fallback = Path(tempfile.gettempdir()) / "falajline-cache"
+    if os.environ.get("VERCEL"):
+        return fallback
+    local = BACKEND_DIR / ".cache"
+    try:
+        local.mkdir(parents=True, exist_ok=True)
+        probe = local / ".write-test"
+        probe.write_text("ok", encoding="utf-8")
+        probe.unlink()
+        return local
+    except OSError:
+        return fallback
+
+
+CACHE_DIR = _cache_dir()
 
 
 @dataclass(frozen=True)

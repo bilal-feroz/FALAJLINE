@@ -17,7 +17,7 @@ from .model import telemetry as tel
 from .model import warnings as warn
 from .model.params import ModelParams, Scenario, default_params, preset_scenarios
 from .model.state import estimate_state
-from .weather.service import get_weather
+from .weather.service import get_history, get_weather
 
 PROVENANCE_LEGEND = {
     "observed": "Real-world data from an external provider: Meteomatics weather, OpenStreetMap geography, EAD well locations.",
@@ -50,6 +50,7 @@ def compute(
     demand_reduction: float = 0.15,
     loss_reduction: float = 0.45,
     weather: dict | None = None,
+    history: dict | None = None,
 ) -> dict:
     now = now or datetime.now(timezone.utc)
     params = default_params()
@@ -128,6 +129,7 @@ def compute(
         "scenario_order": list(scenarios.keys()),
         "comparison": comparison,
         "warnings": warnings,
+        "rain_history": history if history is not None else {"available": False, "provenance": "unavailable", "reason": "Not requested."},
     }
 
 
@@ -139,7 +141,9 @@ def get_state(faults_spec: str | None = None, demand_reduction: float = 0.15, lo
         hit = _cache.get(key)
         if hit and now - hit[0] < CACHE_TTL_S:
             return hit[1]
-    bundle = compute(faults_spec=faults_spec, demand_reduction=demand_reduction, loss_reduction=loss_reduction)
+    weather = get_weather()
+    history = get_history() if weather.get("mode") == "live" else None
+    bundle = compute(faults_spec=faults_spec, demand_reduction=demand_reduction, loss_reduction=loss_reduction, weather=weather, history=history)
     with _cache_lock:
         _cache[key] = (now, bundle)
         for k in [k for k, (t, _) in _cache.items() if now - t > 300]:
