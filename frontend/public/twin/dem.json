@@ -1,0 +1,19 @@
+{
+ "source": "AWS Open Data Terrain Tiles (Terrarium), SRTM-derived; resampled",
+ "origin": {
+  "lon": 55.7679,
+  "lat": 24.2148
+ },
+ "metres_per_degree": {
+  "lon": 101525.4206377554,
+  "lat": 110574.0
+ },
+ "half_extent_m": 22000.0,
+ "size": 768,
+ "rows": "north to south (z increasing)",
+ "cols": "west to east (x increasing)",
+ "encoding": "uint16 little-endian, elevation_m = value / 10 - 100",
+ "centre_elevation_m": 289.0,
+ "min_m": 171.3,
+ "max_m": 1146.3
+}
