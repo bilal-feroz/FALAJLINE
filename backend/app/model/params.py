@@ -19,9 +19,9 @@ class SourceParams:
     storage * dh/dt = net_inflow - conductance * h     (h = water-table head above the tunnel invert)
     """
 
-    conductance_lps_per_m: float = 58.0  # falaj discharge gained per metre of head above the tunnel invert
+    conductance_lps_per_m: float = 62.0  # falaj discharge gained per metre of head above the tunnel invert
     specific_yield: float = 0.08  # drainable porosity of the alluvial gravels
-    capture_area_m2: float = 2.5e6  # effective area drained by the mother well and infiltration gallery
+    capture_area_m2: float = 2.7e6  # effective area drained by the mother well and infiltration gallery
     # Rain-fed recharge from the upstream piedmont (only storms above the threshold produce recharge).
     recharge_area_km2: float = 30.0
     recharge_fraction: float = 0.08
@@ -40,7 +40,7 @@ class SourceParams:
 @dataclass(frozen=True)
 class ChannelParams:
     tunnel_length_km: float = TUNNEL_LENGTH_KM
-    tunnel_loss_per_km: float = 0.016  # seepage along the unlined conveyance section
+    tunnel_loss_per_km: float = 0.008  # seepage along the unlined conveyance section
     main_length_km: float = 0.36
     main_loss_per_km: float = 0.030
     main_capacity_lps: float = 120.0
@@ -73,17 +73,20 @@ class DemandParams:
     application_efficiency: float = 0.60  # basin / flood irrigation
     effective_rain_fraction: float = 0.75
     effective_rain_threshold_mm: float = 2.0
+    # Water is delivered in timed turns over a rotation, and the root zone stores water between turns, so the
+    # requirement is judged on mean ET0 over one rotation rather than on a single hot or cool day.
+    rotation_days: int = 7
 
 
 @dataclass(frozen=True)
 class RiskParams:
     required_supply_ratio: float = 1.0  # supply / demand below this counts as a shortfall
     horizon_days: int = 21
-    act_window_days: int = 5
+    act_window_days: int = 7
     act_probability: float = 0.60
-    prepare_window_days: int = 12
-    prepare_probability: float = 0.35
-    watch_probability: float = 0.10
+    prepare_window_days: int = 14
+    prepare_probability: float = 0.40
+    watch_probability: float = 0.20
     watch_margin: float = 0.12  # supply margin below which a declining trend is worth watching
     persistence_evaluations: int = 2  # consecutive daily evaluations needed before escalating
 
@@ -98,8 +101,8 @@ class UncertaintyParams:
     storage_log_sd: float = 0.22
     conductance_rel_sd: float = 0.06
     loss_log_sd: float = 0.20
-    demand_rel_sd: float = 0.06
-    weather_rel_sd_day0: float = 0.03
+    demand_rel_sd: float = 0.05
+    weather_rel_sd_day0: float = 0.02
     weather_rel_sd_per_day: float = 0.005
     weather_extended_extra_sd: float = 0.05
 
@@ -128,8 +131,8 @@ class ModelParams:
 
 # Traditional falaj water rights are time shares of the whole flow, fixed long ago and not proportional to
 # today's crop demand. The shares below are a representative allocation with that kind of imbalance.
-_BRANCH_SHARES = {"A": 0.352, "B": 0.330, "C": 0.318}
-_ZONE_SHARES = {"Z1": 0.50, "Z2": 0.50, "Z3": 0.50, "Z4": 0.50, "Z5": 0.50, "Z6": 0.50}
+_BRANCH_SHARES = {"A": 0.363, "B": 0.332, "C": 0.305}
+_ZONE_SHARES = {"Z1": 0.517, "Z2": 0.483, "Z3": 0.492, "Z4": 0.508, "Z5": 0.559, "Z6": 0.441}
 _ZONE_COVER = {"Z1": 0.60, "Z2": 0.62, "Z3": 0.64, "Z4": 0.62, "Z5": 0.60, "Z6": 0.63}
 _BRANCH_NAMES = {"A": "North branch", "B": "West branch", "C": "South branch"}
 _SINUOSITY = 1.3
