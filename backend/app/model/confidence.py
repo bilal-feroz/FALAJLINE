@@ -66,12 +66,12 @@ def system_factors(t: Telemetry, state: StateEstimate, weather: dict, extended_d
     age = sat.get("latest_valid_age_days")
     if sat.get("latest_status") != "valid":
         f.append(_factor("satellite", "Vegetation index", "missing", -3 if age is not None and age <= 12 else -5,
-                         "Latest pass is cloud-obscured: marked unavailable, not treated as zero."
+                         "Latest Sentinel-2 pass is cloud-obscured: marked unavailable, not treated as zero."
                          + (f" Last valid pass {age:.0f} days ago." if age is not None else "")))
     elif age is not None and age > 8:
         f.append(_factor("satellite", "Vegetation index", "degraded", -2, f"Last valid pass is {age:.0f} days old."))
     else:
-        f.append(_factor("satellite", "Vegetation index", "ok", 0, "Recent valid pass available (simulated feed)."))
+        f.append(_factor("satellite", "Vegetation index", "ok", 0, "Recent clear Sentinel-2 pass available."))
     return f
 
 

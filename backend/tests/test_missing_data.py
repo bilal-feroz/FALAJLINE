@@ -1,11 +1,13 @@
 """Missing, stale and bad data: detected, never turned into numbers, and always paid for in confidence."""
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 
 import numpy as np
 
+
 from app import engine
+from app.model import confidence as conf
 from app.config import UAE_TZ
 from app.model import forecast as fc
 from app.model import telemetry as tel
@@ -59,17 +61,25 @@ def test_day_with_too_few_readings_has_no_daily_mean(now):
     assert daily[-1]["mean"] is None and daily[-3]["mean"] is not None
 
 
-def test_obscured_satellite_pass_is_unavailable_not_zero(now):
-    clear = tel.generate(P, now, {}).satellite
-    cloudy = tel.generate(P, now, {tel.SATELLITE_ID: "offline"}).satellite
-    assert cloudy["latest_status"] == "cloud_obscured"
-    assert all(v is None for v in cloudy["passes"][-1]["zones"].values())
-    assert cloudy["latest_valid_age_days"] > clear["latest_valid_age_days"]
-    for p in clear["passes"]:
-        if p["status"] == "cloud_obscured":
-            assert all(v is None for v in p["zones"].values())
-        else:
-            assert all(0.3 < v < 0.9 for v in p["zones"].values())
+def test_real_sentinel2_ndvi_is_observed_and_plausible(now):
+    sat = tel.generate(P, now, {}).satellite
+    assert sat["provenance"] == "observed" and "Sentinel-2" in sat["source"]
+    assert sat["passes"] and all(datetime.fromisoformat(p["time"]) <= now for p in sat["passes"])
+    for p in sat["passes"]:
+        if p["status"] == "valid":
+            assert all(v is not None and 0.2 < v < 0.95 for v in p["zones"].values())
+
+
+def test_cloud_obscured_pass_is_unavailable_not_zero():
+    # 21 Jul 2026: the scene over the oasis was cloud, so every zone is unavailable rather than zero
+    as_of = datetime(2026, 7, 22, 9, tzinfo=timezone.utc)
+    sat = tel.generate(P, as_of, {}).satellite
+    assert sat["latest_status"] == "cloud_obscured"
+    assert all(v is None for v in sat["passes"][-1]["zones"].values())
+    assert sat["latest_valid_age_days"] > 1.0  # age counts from the last clear pass, not the cloudy one
+    factors = conf.system_factors(tel.generate(P, as_of, {}), estimate_state(tel.generate(P, as_of, {}), P), {"mode": "live", "status": "ok"}, 0)
+    sat_factor = next(f for f in factors if f["key"] == "satellite")
+    assert sat_factor["status"] == "missing" and sat_factor["impact"] < 0 and "not treated as zero" in sat_factor["detail"]
 
 
 def test_losing_sensors_never_lowers_the_risk_level(now, demo_weather):
@@ -114,9 +124,7 @@ def test_confidence_falls_as_inputs_go_missing(now, demo_weather):
     healthy = index("none")
     no_level = index("S-GW-01:offline")
     no_source = index("S-GW-01:offline,S-FL-MAIN:offline")
-    cloudy = index("SAT-VI:offline")
     assert healthy["system"]["index"] > no_level["system"]["index"] > no_source["system"]["index"]
-    assert cloudy["system"]["index"] < healthy["system"]["index"]
     reasons = " ".join(f["detail"] for f in no_source["system"]["factors"])
     assert "No current source observation" in reasons
     # a zone-specific gap only lowers that zone

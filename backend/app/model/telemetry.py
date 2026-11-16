@@ -10,10 +10,13 @@ values, outliers), exactly as it would have to be with real sensors.
 """
 from __future__ import annotations
 
+import json
 import warnings
 import zlib
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta, timezone
+from functools import lru_cache
+from pathlib import Path
 
 import numpy as np
 
@@ -33,7 +36,7 @@ DAILY_WINDOW_D = 14
 DEFAULT_FAULTS = {"S-OUT-Z2": "offline", "S-FL-B": "stale"}
 FAULT_GAP_HOURS = {"offline": 11, "stale": 3}
 FAULT_MODES = ("ok", "stale", "offline", "stuck")
-SATELLITE_ID = "SAT-VI"
+SATELLITE_ID = "S2-NDVI"
 
 
 @dataclass(frozen=True)
@@ -247,7 +250,7 @@ def generate(
         hours=hours,
         sensors=sensors,
         faults=faults,
-        satellite=_vegetation(params, as_of, anchor_dt, faults),
+        satellite=_vegetation(params, as_of),
     )
 
 
@@ -286,50 +289,66 @@ def _classify(d: SensorDef, hours: np.ndarray, raw: np.ndarray, as_of: datetime,
     return series
 
 
-def _vegetation(params: ModelParams, as_of: datetime, anchor_dt: datetime, faults: dict[str, str]) -> dict:
-    """SIMULATED vegetation-index passes (Sentinel-2-like 5-day revisit).
+_S2_FILE = Path(__file__).resolve().parent.parent / "data" / "sentinel2_ndvi.json"
 
-    A stand-in for a real NDVI feed. Obscured passes are reported as unavailable, never as zero, and the
-    index describes canopy condition only: it says nothing about groundwater level.
+
+@lru_cache(maxsize=1)
+def _sentinel2() -> dict | None:
+    try:
+        return json.loads(_S2_FILE.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+
+
+def _vegetation(params: ModelParams, as_of: datetime) -> dict:
+    """OBSERVED vegetation index: per-zone NDVI from Copernicus Sentinel-2 L2A (see scripts/fetch_sentinel2.py).
+
+    Only passes acquired before `as_of` are used. A pass whose zone pixels were cloud, shadow or cirrus is
+    reported as unavailable for that zone, never as zero. NDVI describes canopy condition only: it says
+    nothing about groundwater level.
     """
-    revisit = 5
-    first_pass = anchor_dt - timedelta(days=28) + timedelta(hours=10, minutes=40)
+    data = _sentinel2()
+    base = {"id": SATELLITE_ID, "label": "Vegetation index (NDVI) · Sentinel-2 L2A", "revisit_days": 5}
+    if not data:
+        return {**base, "provenance": "unavailable", "note": "Sentinel-2 extract not found; vegetation index unavailable.",
+                "passes": [], "latest_valid_age_days": None, "latest_status": "unavailable"}
+    zone_ids = [z.id for z in params.zones]
     passes = []
-    k = 0
-    while True:
-        when = first_pass + timedelta(days=revisit * k)
+    for raw in data.get("passes", []):
+        when = datetime.fromisoformat(raw["time"].replace("Z", "+00:00"))
         if when > as_of:
-            break
-        obscured = k % 5 == 3  # an occasional dust / cloud-obscured scene
-        zones = {}
-        for i, z in enumerate(params.zones):
-            if obscured:
-                zones[z.id] = None
-                continue
-            rng = np.random.default_rng(zlib.crc32(f"{z.id}:{k}".encode()))
-            base = 0.50 + 0.10 * z.canopy_cover + 0.012 * ((i * 7) % 3 - 1)
-            zones[z.id] = round(float(base + 0.008 * rng.standard_normal()), 3)
-        passes.append({"time": when.astimezone(timezone.utc).isoformat(), "status": "cloud_obscured" if obscured else "valid", "zones": zones})
-        k += 1
-    passes = passes[-6:]
-    if faults.get(SATELLITE_ID) and passes:
-        passes[-1] = {**passes[-1], "status": "cloud_obscured", "zones": {z.id: None for z in params.zones}}
+            continue
+        zones = {zid: raw["zones"].get(zid) for zid in zone_ids}
+        passes.append({"time": when.astimezone(timezone.utc).isoformat(), "status": raw["status"], "zones": zones,
+                       "oasis": raw.get("oasis"), "scene_cloud_pct": raw.get("scene_cloud_pct")})
+    passes = passes[-40:]
     valid = [p for p in passes if p["status"] == "valid"]
     age = None
     if valid:
         age = (as_of - datetime.fromisoformat(valid[-1]["time"])).total_seconds() / 86400.0
+
+    def change(zid: str, days: float) -> float | None:
+        """NDVI change for a zone between the latest clear value and the clear value nearest `days` earlier."""
+        series = [(datetime.fromisoformat(p["time"]), p["zones"][zid]) for p in passes if p["zones"].get(zid) is not None]
+        if len(series) < 2:
+            return None
+        t_last, v_last = series[-1]
+        target = t_last - timedelta(days=days)
+        t_ref, v_ref = min(series[:-1], key=lambda tv: abs((tv[0] - target).total_seconds()))
+        return round(v_last - v_ref, 3) if abs((t_ref - target).days) <= 8 else None
+
     return {
-        "id": SATELLITE_ID,
-        "provenance": "simulated",
-        "label": "Vegetation index (simulated Sentinel-2-style NDVI)",
-        "note": (
-            "Simulated placeholder for a Sentinel-2 / Earth Engine vegetation feed. It describes canopy condition "
-            "only and is never a measurement of groundwater level. Obscured scenes are unavailable, not zero."
-        ),
-        "revisit_days": revisit,
+        **base,
+        "provenance": "observed",
+        "source": data.get("source"),
+        "licence": data.get("licence"),
+        "method": data.get("method"),
+        "note": data.get("note"),
+        "retrieved_at": data.get("retrieved_at"),
         "passes": passes,
         "latest_valid_age_days": None if age is None else round(age, 1),
         "latest_status": passes[-1]["status"] if passes else "unavailable",
+        "change_30d": {zid: change(zid, 30) for zid in zone_ids},
     }
 
 
