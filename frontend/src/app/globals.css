@@ -1,0 +1,154 @@
+@import "tailwindcss";
+
+/* FALAJLINE design tokens: graphite ground, restrained water accents, sand and earth, amber for warnings,
+   red only for the critical state. */
+@theme inline {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", monospace;
+
+  --color-bg: #07090a;
+  --color-panel: #0d1011;
+  --color-panel-2: #121617;
+  --color-panel-3: #181d1e;
+  --color-line: #1c2223;
+  --color-line-2: #2a3233;
+
+  --color-fg: #e8eae7;
+  --color-fg-2: #a4aca9;
+  --color-fg-3: #6c7573;
+  --color-fg-4: #454d4c;
+
+  --color-water: #36c3b5;
+  --color-water-2: #4ea9d8;
+  --color-water-deep: #0e3f47;
+  --color-sand: #cdb88c;
+  --color-earth: #8d7350;
+
+  --color-normal: #36c3b5;
+  --color-watch: #d6b65c;
+  --color-prepare: #f08d32;
+  --color-act: #e5484d;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  font-feature-settings: "ss01", "cv11";
+  overflow: hidden;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-water) 35%, transparent);
+}
+
+/* thin, quiet scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line-2) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--color-line-2);
+  border-radius: 4px;
+}
+
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--color-fg-3);
+}
+
+/* hatch used wherever a value is unavailable, so a gap never looks like a zero */
+.hatch {
+  background-image: repeating-linear-gradient(135deg, transparent 0 4px, color-mix(in srgb, var(--color-fg-3) 30%, transparent) 4px 5px);
+}
+
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 45%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 7px transparent;
+  }
+}
+.pulse {
+  animation: pulse-ring 1.8s ease-out infinite;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.fade-in {
+  animation: fade-in 0.25s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse,
+  .fade-in {
+    animation: none;
+  }
+}
+
+/* MapLibre chrome, restyled to sit on the dark ground */
+.maplibregl-ctrl-attrib {
+  background: rgba(7, 9, 10, 0.72) !important;
+  color: var(--color-fg-3) !important;
+  font-size: 10px !important;
+}
+.maplibregl-ctrl-attrib a {
+  color: var(--color-fg-2) !important;
+}
+.maplibregl-ctrl-group {
+  background: var(--color-panel-2) !important;
+  border: 1px solid var(--color-line-2) !important;
+  box-shadow: none !important;
+}
+.maplibregl-ctrl-group button + button {
+  border-top: 1px solid var(--color-line-2) !important;
+}
+.maplibregl-ctrl-group button span {
+  filter: invert(1) opacity(0.7);
+}
+.maplibregl-popup-content {
+  background: var(--color-panel-2) !important;
+  color: var(--color-fg) !important;
+  border: 1px solid var(--color-line-2);
+  border-radius: 6px !important;
+  padding: 8px 10px !important;
+  font-size: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5) !important;
+}
+.maplibregl-popup-tip {
+  border-top-color: var(--color-panel-2) !important;
+  border-bottom-color: var(--color-panel-2) !important;
+}
+
+.recharts-surface:focus,
+.recharts-wrapper:focus,
+.recharts-wrapper *:focus {
+  outline: none;
+}
