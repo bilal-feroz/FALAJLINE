@@ -126,7 +126,7 @@ export function LabelLayer({ net, dem }: { net: Net; dem: Dem }) {
           const color = RISK_COLOR[zf.risk[day]];
           const active = selection?.type === "zone" && selection.id === z.id;
           return (
-            <Label key={z.id} anchor={{ pos: () => [z.centroid[0], h(...z.centroid) + GAUGE_H + 12, z.centroid[1]], vis: () => smooth(0.62 + i * 0.04, 0.8 + i * 0.04, frame.reveal) * near(16000)() * (layers.gauges ? 1 : 0) }}>
+            <Label key={z.id} anchor={{ pos: () => [z.centroid[0], h(...z.centroid) + GAUGE_H + 12, z.centroid[1]], vis: () => smooth(0.62 + i * 0.04, 0.8 + i * 0.04, frame.reveal) * near(9000)() * (layers.gauges ? 1 : 0) }}>
               <div className={`flex items-center gap-1.5 whitespace-nowrap rounded-full py-[3px] pl-1.5 pr-2.5 ${active ? "glass-ink" : "glass-soft"}`}>
                 <span className="h-2 w-2 rounded-full" style={{ background: color, boxShadow: `0 0 0 2px ${active ? "rgba(246,239,225,0.15)" : "rgba(255,255,255,0.6)"}` }} />
                 <span className={`font-mono text-[12px] font-medium ${active ? "text-cream" : "text-ink"}`}>{z.id}</span>

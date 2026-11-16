@@ -49,7 +49,7 @@ export function Timeline() {
 
   return (
     <footer className="glass pointer-events-auto absolute inset-x-4 bottom-4 z-30 flex h-[76px] items-stretch overflow-hidden rounded-[20px]">
-      <div className="flex w-[196px] shrink-0 items-center gap-3.5 border-r hairline pl-4 pr-3">
+      <div className="flex w-[214px] shrink-0 items-center gap-3.5 border-r hairline pl-4 pr-3">
         <button
           onClick={() => setPlaying(!playing)}
           aria-label={playing ? "Pause" : "Play the 21-day forecast"}
@@ -63,12 +63,12 @@ export function Timeline() {
         </button>
         <div className="min-w-0">
           <div className="display text-[25px] text-ink">{fmtDay(sc.dates[day])}</div>
-          <div className="mt-1 flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-ink-3">
-            <span className={day === 0 ? "text-ink" : ""}>{day === 0 ? "Today" : `Day +${day}`}</span>
+          <div className="mt-1 flex items-center gap-1.5 whitespace-nowrap font-mono text-[11px] uppercase tracking-[0.14em] text-ink-3">
+            <span className={day === 0 ? "text-ink" : ""}>{day === 0 ? "Today" : `+${day} d`}</span>
             <span>· {fmtWeekday(sc.dates[day])}</span>
             {day !== 0 && (
-              <button onClick={() => setDay(0)} className="text-ink-3 underline-offset-2 hover:text-ink hover:underline">
-                reset
+              <button onClick={() => setDay(0)} title="Back to today" className="ml-0.5 rounded-full px-1.5 text-ink-3 ring-1 ring-ink/15 hover:bg-ink/5 hover:text-ink">
+                today
               </button>
             )}
           </div>

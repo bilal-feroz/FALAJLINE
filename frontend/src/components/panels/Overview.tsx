@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { RISK_COLOR, RISK_WORD, STATUS_COLOR, compass, fmt, fmtAge, fmtDay, fmtLong, inDays } from "@/lib/format";
 import { useScenario, useStore } from "@/lib/store";
 import { Conf, Eyebrow, Prov, Risk, Spark } from "../ui";
@@ -44,6 +44,13 @@ export function Overview() {
   const faults = useStore((s) => s.faults);
   const highlight = useStore((s) => s.tour.highlight);
   const [sensorsOpen, setSensorsOpen] = useState(false);
+  const weatherRef = useRef<HTMLElement>(null);
+  const healthRef = useRef<HTMLElement>(null);
+  // the presentation points at a section: bring it into view
+  useEffect(() => {
+    const el = highlight === "weather" ? weatherRef.current : highlight === "health" ? healthRef.current : null;
+    el?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [highlight]);
 
   const level = sc.system.risk[day];
   const conf = sc.confidence.system[day];
@@ -125,7 +132,7 @@ export function Overview() {
           </ul>
         </section>
 
-        <section className={`border-t hairline px-5 py-4 transition-colors ${highlight === "weather" ? "bg-ink/[0.06]" : ""}`}>
+        <section ref={weatherRef} className={`border-t hairline px-5 py-4 transition-colors ${highlight === "weather" ? "bg-ink/[0.06]" : ""}`}>
           <div className="mb-3 flex items-center justify-between">
             <Eyebrow>Weather · {live ? "Meteomatics" : "demo data"}</Eyebrow>
             <Prov kind={live ? "live" : "simulated"} />
@@ -166,7 +173,7 @@ export function Overview() {
           )}
         </section>
 
-        <section className={`border-t hairline px-5 py-4 transition-colors ${highlight === "health" ? "bg-ink/[0.06]" : ""}`}>
+        <section ref={healthRef} className={`border-t hairline px-5 py-4 transition-colors ${highlight === "health" ? "bg-ink/[0.06]" : ""}`}>
           <div className="mb-2.5 flex items-center justify-between">
             <Eyebrow>Data health</Eyebrow>
             <button onClick={() => setSensorsOpen(!sensorsOpen)} className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-3 hover:text-ink">

@@ -46,10 +46,10 @@ export function presetPose(preset: CameraPreset, net: Net, dem: Dem, zone?: stri
       return { target: new THREE.Vector3(cx, h(cx, cz), cz), r: 3100, polar: 0.98, az };
     case "source": {
       // the whole falaj side-on: the oasis on the left, the mother well on the right
-      const x = net.sharia[0] + (net.well[0] - net.sharia[0]) * 0.48;
-      const z = net.sharia[1] + (net.well[1] - net.sharia[1]) * 0.48;
+      const x = net.sharia[0] + (net.well[0] - net.sharia[0]) * 0.38;
+      const z = net.sharia[1] + (net.well[1] - net.sharia[1]) * 0.38;
       const side = lookAlong(net.well[0] - net.sharia[0], net.well[1] - net.sharia[1], Math.PI / 2 - 0.22);
-      return { target: new THREE.Vector3(x, h(x, z), z), r: 13800, polar: 0.78, az: side };
+      return { target: new THREE.Vector3(x, h(x, z), z), r: 16500, polar: 0.72, az: side };
     }
     case "zone": {
       const zz = net.zones.find((q) => q.id === zone) ?? net.zones[0];
