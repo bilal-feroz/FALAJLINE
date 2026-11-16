@@ -78,7 +78,12 @@ export function ScenarioRatioChart({ target }: { target: string }) {
 
 function Slider({ label, value, max, onCommit, hint }: { label: string; value: number; max: number; onCommit: (v: number) => void; hint: string }) {
   const [local, setLocal] = useState(value);
-  useEffect(() => setLocal(value), [value]);
+  const [committed, setCommitted] = useState(value);
+  if (committed !== value) {
+    // the backend confirmed a new setting: follow it
+    setCommitted(value);
+    setLocal(value);
+  }
   // debounce: recalculate once the handle rests
   useEffect(() => {
     if (local === value) return;

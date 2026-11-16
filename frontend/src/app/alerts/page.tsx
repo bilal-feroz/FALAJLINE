@@ -1,19 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { DeliveryQueue, Notices, SmsPreview, WarningCards, WarningDetail } from "@/components/alerts/panels";
 import { useStore } from "@/lib/store";
 
 export default function AlertsPage() {
   const warnings = useStore((s) => s.data)!.warnings.warnings;
   const select = useStore((s) => s.select);
-  const [selected, setSelected] = useState<string | null>(null);
-
-  // deep link from the Operations view: /alerts?w=W-Z4-SUPPLY
-  useEffect(() => {
-    const id = new URLSearchParams(window.location.search).get("w");
-    if (id) setSelected(id);
-  }, []);
+  // deep link from the Operations view: /alerts?w=W-Z4-SUPPLY (this page only renders in the browser, after data has loaded)
+  const [selected, setSelected] = useState<string | null>(() => (typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("w")));
 
   const current = warnings.find((w) => w.id === selected) ?? warnings[0] ?? null;
 
