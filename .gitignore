@@ -23,3 +23,6 @@ next-env.d.ts
 
 # Vercel project links
 .vercel
+
+# Demo video build (large media, rendered locally)
+brag-output/
