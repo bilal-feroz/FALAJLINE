@@ -75,17 +75,18 @@ export function Intro() {
   const scrim = Math.min(1, Math.max(0, (t - 5.2) / 1.6)) * (1 - Math.min(1, Math.max(0, (t - INTRO.UI_AT) / 1.4)));
   return (
     <div className="pointer-events-none absolute inset-0 z-40">
-      <div className="absolute inset-0" style={{ opacity: scrim, background: "radial-gradient(120% 90% at 0% 100%, rgba(14,11,7,0.78) 0%, rgba(14,11,7,0.45) 32%, rgba(14,11,7,0) 62%)" }} />
+      <div className="absolute inset-0" style={{ opacity: scrim, background: "radial-gradient(110% 85% at 0% 0%, rgba(14,11,7,0.84) 0%, rgba(14,11,7,0.56) 34%, rgba(14,11,7,0) 64%)" }} />
       <div className="absolute left-10 top-9 flex items-center gap-3 text-cream fade">
         <Mark size={24} />
         <span className="font-mono text-[14px] font-medium tracking-[0.36em] text-cream">FALAJLINE</span>
       </div>
 
       {b && (
-        <div key={beat} className="absolute bottom-24 left-10 max-w-[640px] rise">
+        // top left, over the open sea of the Gulf: clear of the map as the camera comes down
+        <div key={beat} className="absolute left-10 top-[clamp(84px,11vh,124px)] max-w-[min(600px,46vw)] rise">
           <div className="font-mono text-[12px] uppercase tracking-[0.24em] text-beige">{b.kicker}</div>
-          <h1 className="display mt-4 text-[64px] leading-[0.98] text-cream">{b.title}</h1>
-          <p className="mt-5 max-w-[460px] text-[16px] leading-relaxed text-cream-2">{b.body}</p>
+          <h1 className="display mt-4 text-[clamp(40px,4.2vw,62px)] leading-[0.98] text-cream">{b.title}</h1>
+          <p className="mt-5 max-w-[440px] text-[16px] leading-relaxed text-cream-2">{b.body}</p>
         </div>
       )}
 
