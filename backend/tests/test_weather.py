@@ -18,7 +18,9 @@ from app.weather.service import get_weather
 LIVE = replace(SETTINGS, meteomatics_username="user", meteomatics_password="pass", meteomatics_base_url="https://api.example.test", force_demo=False)
 NO_CREDS = replace(SETTINGS, meteomatics_username="", meteomatics_password="", force_demo=False)
 VALUES = {"t_2m:C": 24.0, "relative_humidity_2m:p": 50.0, "wind_speed_10m:ms": 2.5, "global_rad:W": 200.0,
-          "precip_24h:mm": 0.0, "evaporation_24h:mm": -0.07, "evapotranspiration_24h:mm": 3.9}
+          "wind_dir_10m:d": 315.0, "wind_gusts_10m_1h:ms": 6.0, "total_cloud_cover:p": 20.0,
+          "precip_24h:mm": 0.0, "evaporation_24h:mm": -0.07, "evapotranspiration_24h:mm": 3.9,
+          "prob_precip_24h:p": 2.0, "soil_moisture_index_-15cm:idx": 0.1}
 
 
 def fake_api(*, status=200, reject=(), missing=(), horizon_days=None, calls=None):
@@ -120,7 +122,8 @@ def test_network_failure_is_retried_then_reported(now, isolated_cache, monkeypat
         raise httpx.ConnectError("down")
 
     b = get_weather(now, settings=LIVE, transport=httpx.MockTransport(boom))
-    assert len(attempts) == 3 and b["mode"] == "demo" and b["live_error"]["kind"] == "network"
+    # the hourly and daily queries each retry three times before giving up
+    assert len(attempts) == 6 and b["mode"] == "demo" and b["live_error"]["kind"] == "network"
 
 
 def test_unsupported_optional_parameter_degrades_gracefully(now, isolated_cache):
@@ -152,3 +155,66 @@ def test_local_query_budget_blocks_calls(now, isolated_cache):
     calls = []
     b = get_weather(now, settings=replace(LIVE, weather_daily_query_budget=0), transport=fake_api(calls=calls))
     assert calls == [] and b["mode"] == "demo" and b["live_error"]["kind"] == "budget"
+
+
+def test_new_parameters_are_aggregated_per_day(now, isolated_cache):
+    b = get_weather(now, settings=LIVE, transport=fake_api())
+    day = oasis(b)["daily"][10]
+    assert day["wind_dir_deg"] == 315.0 and day["gust_max_ms"] == 6.0 and day["cloud_pct"] == 20.0
+    assert day["prob_precip_pct"] == 2.0 and day["soil_moisture_idx"] == 0.1
+    assert oasis(b)["current"]["wind_dir_deg"] == 315.0
+
+
+def test_rejected_optional_hourly_parameter_keeps_the_core(now, isolated_cache):
+    b = get_weather(now, settings=LIVE, transport=fake_api(reject=("wind_dir_10m:d",)))
+    status = {p["id"]: p["status"] for p in b["parameters"]}
+    assert b["mode"] == "live" and status["wind_dir_10m:d"] == "unsupported" and status["t_2m:C"] == "ok"
+    day = oasis(b)["daily"][10]
+    assert day["wind_dir_deg"] is None and day["t_mean_c"] == 24.0
+
+
+def test_vector_mean_wind_direction_wraps_north():
+    from app.weather.service import _vector_mean_dir
+    assert _vector_mean_dir([1.0, 1.0], [350.0, 10.0]) in (0.0, 360.0)
+    assert _vector_mean_dir([3.0, 1.0], [90.0, 180.0]) == pytest.approx(108.0, abs=1.0)
+    assert _vector_mean_dir([], []) is None
+
+
+def test_history_summarises_real_rain_events(now, isolated_cache):
+    rain = {"2026-08-22": 52.8, "2026-10-17": 8.4, "2026-10-18": 12.0, "2026-11-02": 1.2}
+
+    def handler(request):
+        span, params, coords, _ = unquote(request.url.path).strip("/").split("/")
+        rng, step = span.rsplit(":", 1)
+        start, end = (datetime.fromisoformat(x.replace("Z", "+00:00")) for x in rng.split("--"))
+        rows = []
+        t = start
+        while t <= end:
+            local_day = (t + timedelta(hours=4) - timedelta(days=1)).date().isoformat()
+            rows.append({"date": t.strftime("%Y-%m-%dT%H:%M:%SZ"), "value": rain.get(local_day, 0.0)})
+            t += timedelta(days=1)
+        data = [{"parameter": params, "coordinates": [{"lat": 0, "lon": 0, "dates": rows} for _ in coords.split("+")]}]
+        return httpx.Response(200, json={"status": "OK", "data": data})
+
+    h = service.get_history(now, settings=LIVE, transport=httpx.MockTransport(handler))
+    assert h["available"] and h["provenance"] == "observed" and h["threshold_mm"] == 5.0
+    rec = next(loc for loc in h["locations"] if loc["id"] == "recharge")
+    assert rec["total_mm"] == pytest.approx(74.4) and rec["recharge_events"] == 3 and rec["rain_days"] == 4
+    assert rec["last_recharge_event"] == {"date": "2026-10-18", "mm": 12.0, "days_ago": 29}
+    assert rec["wettest_day"]["date"] == "2026-08-22"
+    assert service.get_history(now, settings=LIVE, transport=httpx.MockTransport(handler))["cache_age_s"] == 0  # second call is cached
+
+
+def test_history_and_field_are_never_invented_without_live_access(now, isolated_cache):
+    assert service.get_history(now, settings=NO_CREDS)["available"] is False
+    assert service.get_field(now, settings=NO_CREDS)["available"] is False
+    down = httpx.MockTransport(lambda r: httpx.Response(401, text="no"))
+    assert service.get_history(now, settings=LIVE, transport=down)["available"] is False
+    assert service.get_field(now, settings=LIVE, transport=down)["available"] is False
+
+
+def test_field_csv_matrix_is_parsed_north_first(now, isolated_cache):
+    csv = "validdate;2026-11-17 00:00:00\nparameter;evapotranspiration_24h:mm\ndata;51.4;51.45;51.5\n22.4;4.1;4.2;-999\n22.45;4.3;4.4;4.5\n"
+    f = service.get_field(now, settings=LIVE, transport=httpx.MockTransport(lambda r: httpx.Response(200, text=csv)))
+    assert f["available"] and f["lats"] == [22.45, 22.4] and f["lons"] == [51.4, 51.45, 51.5]
+    assert f["values"] == [[4.3, 4.4, 4.5], [4.1, 4.2, None]] and f["min"] == 4.1 and f["max"] == 4.5
