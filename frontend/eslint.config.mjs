@@ -6,10 +6,16 @@ const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
   {
-    // The 3D scene drives three.js imperatively: geometry buffers and instance matrices are updated in place
-    // every frame inside useFrame. That is the intended pattern for React Three Fiber, not accidental mutation.
-    files: ["src/components/twin/**"],
-    rules: { "react-hooks/immutability": "off" },
+    // The 3D twin drives three.js imperatively: buffers, uniforms and instance matrices are updated in place every
+    // frame inside useFrame, and seeded randomness builds geometry once. That is the intended React Three Fiber
+    // pattern, not accidental mutation of React state.
+    files: ["src/twin/**"],
+    rules: {
+      "react-hooks/immutability": "off",
+      "react-hooks/purity": "off",
+      "react-hooks/refs": "off",
+      "react-hooks/set-state-in-effect": "off",
+    },
   },
   // Override default ignores of eslint-config-next.
   globalIgnores([
