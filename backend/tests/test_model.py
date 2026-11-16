@@ -176,3 +176,11 @@ def test_engine_bundle_is_complete_and_timeline_ready(now, demo_weather):
     assert less["deficit_m3_total"] < base["deficit_m3_total"]
     assert bundle["telemetry"]["provenance"] == "simulated"
     assert bundle["scenarios"]["baseline"]["provenance"] == "modelled"
+
+
+def test_state_bundle_is_json_serialisable(now, demo_weather):
+    import json
+
+    bundle = engine.compute(now=now, weather=demo_weather, rain_history={"available": False, "provenance": "unavailable"})
+    json.dumps(bundle)  # numpy values must never leak into the API response
+    assert bundle["rain_history"]["available"] is False
