@@ -78,7 +78,7 @@ export function Overview() {
   else sentence = `Supply covers demand in every zone through ${fmtLong(sc.dates[sc.dates.length - 1])}.`;
 
   return (
-    <aside className="glass pointer-events-auto absolute bottom-[104px] left-4 top-[76px] z-20 flex w-[396px] flex-col overflow-hidden rise">
+    <aside data-tour="overview" className="glass pointer-events-auto absolute bottom-[104px] left-4 top-[76px] z-20 flex w-[396px] flex-col overflow-hidden rise">
       <div className="min-h-0 flex-1 overflow-y-auto">
         <section className="px-5 pb-4 pt-5">
           <div className="flex items-center justify-between">
@@ -93,7 +93,7 @@ export function Overview() {
           <p className="mt-2 text-[15px] leading-snug text-ink-2">{sentence}</p>
         </section>
 
-        <section className="grid grid-cols-3 gap-3 border-t hairline px-5 py-4">
+        <section data-tour="kpis" className="grid grid-cols-3 gap-3 border-t hairline px-5 py-4">
           <Kpi label="Flow" value={fmt(flow[day], 1)} unit="L/s" sub={day === 0 ? `${fmt(((flow[21] - flow[0]) / flow[0]) * 100, 0)}% by ${fmtDay(sc.dates[21])}` : `${fmt(((flow[day] - flow[0]) / flow[0]) * 100, 0)}% vs today`} prov="modelled" />
           <Kpi label="Margin" value={`${margin >= 0 ? "+" : ""}${fmt(margin, 0)}`} unit="%" sub={`${fmt(supply, 0)} of ${fmt(demand, 0)} L/s`} prov="modelled" accent={margin < 0 ? RISK_COLOR.ACT : margin < 6 ? RISK_COLOR.PREPARE : undefined} />
           <Kpi label="Source" value={fmt(head[day], 2)} unit="m" sub={`${fmt(data.state.trend_m_per_day * 100, 1)} cm/day`} prov={day === 0 ? "simulated" : "modelled"} />

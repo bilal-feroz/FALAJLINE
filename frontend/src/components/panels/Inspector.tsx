@@ -273,7 +273,7 @@ export function Inspector() {
   }
 
   return (
-    <aside className="glass pointer-events-auto absolute bottom-[104px] right-4 top-[76px] z-20 flex w-[396px] flex-col overflow-hidden rise">
+    <aside data-tour="inspector" className="glass pointer-events-auto absolute bottom-[104px] right-4 top-[76px] z-20 flex w-[396px] flex-col overflow-hidden rise">
       <div className="flex items-start gap-3 px-5 pb-3 pt-5">
         <div className="min-w-0 flex-1">
           <Eyebrow>{eyebrow}</Eyebrow>

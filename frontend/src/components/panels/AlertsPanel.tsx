@@ -259,7 +259,7 @@ export function AlertsPanel() {
   }, [current?.id]);
 
   return (
-    <aside className="glass pointer-events-auto absolute bottom-[104px] right-4 top-[76px] z-20 flex w-[476px] flex-col overflow-hidden rise">
+    <aside data-tour="alerts" className="glass pointer-events-auto absolute bottom-[104px] right-4 top-[76px] z-20 flex w-[476px] flex-col overflow-hidden rise">
       <div className="px-5 pb-3 pt-5">
         <div className="flex items-center justify-between">
           <Eyebrow>Warnings · issued {fmtGst(data.warnings.issued_at)} GST</Eyebrow>

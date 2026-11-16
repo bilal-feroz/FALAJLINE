@@ -41,6 +41,7 @@ interface Store {
   intro: "pending" | "playing" | "done";
   introRun: number;
   tour: { running: boolean; step: number; caption: Caption | null; highlight: string | null };
+  guide: { open: boolean; step: number }; // the step-by-step onboarding
   methodOpen: boolean;
   alertId: string | null;
   forecastTarget: string;
@@ -64,6 +65,7 @@ interface Store {
   startIntro: () => void;
   endIntro: () => void;
   setTour: (t: Partial<Store["tour"]>) => void;
+  setGuide: (g: Partial<Store["guide"]>) => void;
   setMethodOpen: (open: boolean) => void;
   setAlertId: (id: string | null) => void;
   setForecastTarget: (t: string) => void;
@@ -106,6 +108,7 @@ export const useStore = create<Store>((set, get) => ({
   intro: "pending",
   introRun: 0,
   tour: { running: false, step: 0, caption: null, highlight: null },
+  guide: { open: false, step: 0 },
   methodOpen: false,
   alertId: null,
   forecastTarget: "system",
@@ -197,6 +200,7 @@ export const useStore = create<Store>((set, get) => ({
   startIntro: () => set((s) => ({ intro: "playing", introRun: s.introRun + 1, playing: false, selection: null, mode: "overview", day: 0 })),
   endIntro: () => set({ intro: "done" }),
   setTour: (t) => set((s) => ({ tour: { ...s.tour, ...t } })),
+  setGuide: (g) => set((s) => ({ guide: { ...s.guide, ...g } })),
   setMethodOpen: (methodOpen) => set({ methodOpen }),
   setAlertId: (alertId) => set({ alertId }),
   setForecastTarget: (forecastTarget) => set({ forecastTarget }),

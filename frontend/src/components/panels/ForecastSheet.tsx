@@ -57,7 +57,7 @@ export function ForecastSheet() {
   const tabs = [{ id: "system", label: "Oasis", risk: sc.system.risk[day] }, ...sc.zones.map((z) => ({ id: z.id, label: z.id, risk: z.risk[day] }))];
 
   return (
-    <section className="glass glass-solid pointer-events-auto absolute inset-x-4 bottom-[104px] z-20 flex overflow-hidden rise" style={{ height: "42vh" }}>
+    <section data-tour="forecast" className="glass glass-solid pointer-events-auto absolute inset-x-4 bottom-[104px] z-20 flex overflow-hidden rise" style={{ height: "42vh" }}>
       <div className="flex min-w-0 flex-1 flex-col px-6 pb-4 pt-5">
         <div className="flex items-start justify-between gap-6">
           <div className="min-w-0">

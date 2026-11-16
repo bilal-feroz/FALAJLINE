@@ -48,7 +48,7 @@ export function Timeline() {
   });
 
   return (
-    <footer className="glass pointer-events-auto absolute inset-x-4 bottom-4 z-30 flex h-[76px] items-stretch overflow-hidden rounded-[20px]">
+    <footer data-tour="timeline" className="glass pointer-events-auto absolute inset-x-4 bottom-4 z-30 flex h-[76px] items-stretch overflow-hidden rounded-[20px]">
       <div className="flex w-[214px] shrink-0 items-center gap-3.5 border-r hairline pl-4 pr-3">
         <button
           onClick={() => setPlaying(!playing)}
@@ -130,7 +130,7 @@ export function Timeline() {
         </div>
       </div>
 
-      <div className="flex w-[390px] shrink-0 flex-col justify-center gap-1 border-l hairline px-5">
+      <div data-tour="guidance" className="flex w-[390px] shrink-0 flex-col justify-center gap-1 border-l hairline px-5">
         <div className="flex items-center gap-2">
           <Risk level={g.level} />
           <span className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-ink-3">If the forecast holds</span>

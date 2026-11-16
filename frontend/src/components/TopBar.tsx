@@ -67,7 +67,7 @@ export function TopBar() {
         <span className="display whitespace-nowrap text-[18px] italic text-ink-2">Al Ain Oasis</span>
       </div>
 
-      <nav className="glass pointer-events-auto flex h-11 items-center gap-1 rounded-full p-1" aria-label="Mode">
+      <nav data-tour="modes" className="glass pointer-events-auto flex h-11 items-center gap-1 rounded-full p-1" aria-label="Mode">
         {MODES.map((m) => (
           <button
             key={m.id}
@@ -83,7 +83,7 @@ export function TopBar() {
         ))}
       </nav>
 
-      <div className="glass pointer-events-auto flex h-11 items-center gap-3 rounded-full pl-4 pr-1.5">
+      <div data-tour="actions" className="glass pointer-events-auto flex h-11 items-center gap-3 rounded-full pl-4 pr-1.5">
         <Source
           dot={w.mode === "live" ? (w.status === "ok" ? "#7d9a5c" : "#c4972f") : "#d0772c"}
           label="Meteomatics"
@@ -104,6 +104,14 @@ export function TopBar() {
             <svg width="9" height="9" viewBox="0 0 10 10"><path d="M2 1v8l7-4z" fill="currentColor" /></svg>
           )}
           {tour.running ? "Stop" : "Present"}
+        </button>
+        <button
+          onClick={() => useStore.getState().setGuide({ open: true, step: 0 })}
+          className="flex h-8 w-8 items-center justify-center rounded-full text-ink-2 hover:bg-ink/10 hover:text-ink"
+          aria-label="Guided tour"
+          title="Guided tour"
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" strokeWidth="1.2" /><path d="M5.3 5.4a1.8 1.8 0 1 1 2.4 1.7c-.5.2-.7.5-.7 1v.3M7 10.2v.1" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" /></svg>
         </button>
         <button onClick={() => setMethodOpen(true)} className="flex h-8 w-8 items-center justify-center rounded-full text-ink-2 hover:bg-ink/10 hover:text-ink" aria-label="Data and method" title="Data and method">
           <svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" strokeWidth="1.2" /><path d="M7 6.2V10M7 4.1v.2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>

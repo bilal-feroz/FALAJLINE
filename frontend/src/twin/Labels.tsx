@@ -10,6 +10,7 @@ import { frame } from "./frame";
 import { CITIES, toXZ } from "./geo";
 import { GAUGE_H } from "./Gauges";
 import type { Net } from "./net";
+import { screen } from "./screen";
 
 /**
  * Text is plain DOM laid over the canvas: crisp at any zoom and styled like the rest of the interface.
@@ -28,8 +29,14 @@ const smooth = (a: number, b: number, v: number) => {
 
 export function LabelProjector() {
   const v = useMemo(() => new THREE.Vector3(), []);
+  const w = useMemo(() => new THREE.Vector3(), []);
   // runs after the frame is rendered, so labels sit exactly on what is on screen
   useFrame(({ camera, size }) => {
+    screen.project = (x, y, z) => {
+      w.set(x, y, z).project(camera);
+      if (w.z < -1 || w.z > 1) return null;
+      return [(w.x * 0.5 + 0.5) * size.width, (-w.y * 0.5 + 0.5) * size.height];
+    };
     registry.forEach((a, el) => {
       const [x, y, z] = a.pos();
       v.set(x, y, z).project(camera);
