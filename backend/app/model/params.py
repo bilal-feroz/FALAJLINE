@@ -132,7 +132,7 @@ class ModelParams:
 # Traditional falaj water rights are time shares of the whole flow, fixed long ago and not proportional to
 # today's crop demand. The shares below are a representative allocation with that kind of imbalance.
 _BRANCH_SHARES = {"A": 0.363, "B": 0.332, "C": 0.305}
-_ZONE_SHARES = {"Z1": 0.517, "Z2": 0.483, "Z3": 0.492, "Z4": 0.508, "Z5": 0.559, "Z6": 0.441}
+_ZONE_SHARES = {"Z1": 0.517, "Z2": 0.483, "Z3": 0.500, "Z4": 0.500, "Z5": 0.559, "Z6": 0.441}
 _ZONE_COVER = {"Z1": 0.60, "Z2": 0.62, "Z3": 0.64, "Z4": 0.62, "Z5": 0.60, "Z6": 0.63}
 _BRANCH_NAMES = {"A": "North branch", "B": "West branch", "C": "South branch"}
 _SINUOSITY = 1.3
