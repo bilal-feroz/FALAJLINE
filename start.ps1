@@ -4,7 +4,7 @@ $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 if (-not (Test-Path "$root\backend\.venv")) {
     Write-Host "Creating the Python environment..."
     python -m venv "$root\backend\.venv"
-    & "$root\backend\.venv\Scripts\python.exe" -m pip install -q -r "$root\backend\requirements.txt"
+    & "$root\backend\.venv\Scripts\python.exe" -m pip install -q -r "$root\backend\requirements-dev.txt"
 }
 if (-not (Test-Path "$root\frontend\node_modules")) {
     Write-Host "Installing frontend packages..."
