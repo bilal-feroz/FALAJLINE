@@ -1,33 +1,38 @@
 @import "tailwindcss";
 
-/* FALAJLINE design tokens: graphite ground, restrained water accents, sand and earth, amber for warnings,
-   red only for the critical state. */
+/*
+  FALAJLINE design tokens.
+  Black, cream and beige: frosted cream glass with ink type over an atlas-toned desert, black for the
+  primary controls, beige for structure. Risk uses a desert palette (sage, ochre, burnt orange, terracotta)
+  instead of SaaS traffic lights.
+*/
 @theme inline {
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", monospace;
+  --font-serif: var(--font-instrument), "Iowan Old Style", Georgia, serif;
 
-  --color-bg: #07090a;
-  --color-panel: #0d1011;
-  --color-panel-2: #121617;
-  --color-panel-3: #181d1e;
-  --color-line: #1c2223;
-  --color-line-2: #2a3233;
+  --color-ink: #17130e;
+  --color-ink-2: #3a3329;
+  --color-ink-3: #5d5446;
+  --color-ink-4: #847966;
+  --color-cream: #f6efe1;
+  --color-cream-2: #e9e0cd;
+  --color-cream-3: #d2c5ab;
+  --color-cream-4: #aea188;
+  --color-beige: #9f804f;
+  --color-beige-2: #826741;
+  --color-sand: #dccaa5;
+  --color-line: rgb(23 19 14 / 0.08);
+  --color-line-2: rgb(23 19 14 / 0.14);
 
-  --color-fg: #e8eae7;
-  --color-fg-2: #a4aca9;
-  --color-fg-3: #6c7573;
-  --color-fg-4: #454d4c;
+  --color-ok: #7d9a5c;
+  --color-watch: #c4972f;
+  --color-prepare: #d0772c;
+  --color-act: #c2432b;
+}
 
-  --color-water: #36c3b5;
-  --color-water-2: #4ea9d8;
-  --color-water-deep: #0e3f47;
-  --color-sand: #cdb88c;
-  --color-earth: #8d7350;
-
-  --color-normal: #36c3b5;
-  --color-watch: #d6b65c;
-  --color-prepare: #f08d32;
-  --color-act: #e5484d;
+:root {
+  color-scheme: light;
 }
 
 html,
@@ -36,115 +41,177 @@ body {
 }
 
 body {
-  background: var(--color-bg);
-  color: var(--color-fg);
+  background: var(--color-ink);
+  color: var(--color-ink);
   font-family: var(--font-sans);
   font-feature-settings: "ss01", "cv11";
   overflow: hidden;
+  -webkit-font-smoothing: antialiased;
 }
 
 ::selection {
-  background: color-mix(in srgb, var(--color-water) 35%, transparent);
+  background: rgb(159 128 79 / 0.3);
 }
 
-/* thin, quiet scrollbars */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--color-line-2) transparent;
-}
-*::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-*::-webkit-scrollbar-thumb {
-  background: var(--color-line-2);
-  border-radius: 4px;
+  scrollbar-color: rgb(23 19 14 / 0.16) transparent;
 }
 
+@layer components {
+/* ------------------------------------------------------------------ glass */
+/*
+  Frosted cream glass. Legibility comes from a heavy blur (the map behind turns into soft fields of colour,
+  never competing detail) and a dense cream body; the glass reads through the colour that bleeds in, the
+  bright rim and the deep shadow.
+*/
+.glass {
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.34), rgb(255 255 255 / 0) 120px),
+    linear-gradient(180deg, rgb(250 246 237 / 0.86), rgb(243 236 222 / 0.84));
+  /* through a variable: the CSS minifier otherwise rewrites this to the Safari-only prefixed form */
+  --glass-filter: blur(44px) saturate(1.7) brightness(1.05);
+  backdrop-filter: var(--glass-filter);
+  border: 1px solid rgb(255 255 255 / 0.7);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.95),
+    inset 0 -1px 0 rgb(120 96 60 / 0.06),
+    0 1px 2px rgb(52 38 18 / 0.08),
+    0 30px 70px -28px rgb(52 38 18 / 0.5);
+  border-radius: 20px;
+}
+.glass-solid {
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.4), rgb(255 255 255 / 0) 140px),
+    linear-gradient(180deg, rgb(251 248 241 / 0.95), rgb(246 240 228 / 0.94));
+}
+.glass-soft {
+  background: linear-gradient(180deg, rgb(252 249 242 / 0.86), rgb(245 239 226 / 0.8));
+  --glass-filter: blur(24px) saturate(1.6);
+  backdrop-filter: var(--glass-filter);
+  border: 1px solid rgb(255 255 255 / 0.7);
+  box-shadow: 0 8px 24px -10px rgb(52 38 18 / 0.4);
+  border-radius: 14px;
+}
+.glass-ink {
+  background: linear-gradient(180deg, rgb(28 23 17 / 0.9), rgb(18 15 11 / 0.88));
+  --glass-filter: blur(24px) saturate(1.2);
+  backdrop-filter: var(--glass-filter);
+  border: 1px solid rgb(246 239 225 / 0.12);
+  box-shadow: inset 0 1px 0 rgb(246 239 225 / 0.1), 0 20px 50px -20px rgb(20 14 6 / 0.55);
+  color: var(--color-cream);
+  border-radius: 16px;
+}
+.hairline {
+  border-color: rgb(23 19 14 / 0.08);
+}
+
+/* --------------------------------------------------------------- type */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-ink-3);
+}
 .num {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
 }
-
-.label {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--color-fg-3);
+.display {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 0.95;
 }
 
-/* hatch used wherever a value is unavailable, so a gap never looks like a zero */
+/* a gap is drawn as a gap: hatched, never as a zero */
 .hatch {
-  background-image: repeating-linear-gradient(135deg, transparent 0 4px, color-mix(in srgb, var(--color-fg-3) 30%, transparent) 4px 5px);
+  background-image: repeating-linear-gradient(135deg, transparent 0 3px, rgb(23 19 14 / 0.14) 3px 4px);
 }
 
-@keyframes pulse-ring {
-  0% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 45%, transparent);
-  }
-  100% {
-    box-shadow: 0 0 0 7px transparent;
-  }
-}
-.pulse {
-  animation: pulse-ring 1.8s ease-out infinite;
-}
-
-@keyframes fade-in {
+/* ------------------------------------------------------------- motion */
+@keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(3px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
     transform: none;
   }
 }
-.fade-in {
-  animation: fade-in 0.25s ease-out both;
+.rise {
+  animation: rise 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
-
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.fade {
+  animation: fade 0.5s ease-out both;
+}
+@keyframes ping-soft {
+  0% {
+    transform: scale(1);
+    opacity: 0.65;
+  }
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+.ping::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: currentColor;
+  animation: ping-soft 1.8s ease-out infinite;
+}
 @media (prefers-reduced-motion: reduce) {
-  .pulse,
-  .fade-in {
+  .rise,
+  .fade,
+  .ping::after {
     animation: none;
   }
 }
 
-/* MapLibre chrome, restyled to sit on the dark ground */
-.maplibregl-ctrl-attrib {
-  background: rgba(7, 9, 10, 0.72) !important;
-  color: var(--color-fg-3) !important;
-  font-size: 10px !important;
 }
-.maplibregl-ctrl-attrib a {
-  color: var(--color-fg-2) !important;
+
+/* subtle film grain over everything: keeps large flat glass from looking plastic */
+.grain::before {
+  content: "";
+  position: fixed;
+  inset: -50%;
+  pointer-events: none;
+  z-index: 60;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
 }
-.maplibregl-ctrl-group {
-  background: var(--color-panel-2) !important;
-  border: 1px solid var(--color-line-2) !important;
-  box-shadow: none !important;
+
+input[type="range"].slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 2px;
+  background: rgb(23 19 14 / 0.16);
+  border-radius: 2px;
 }
-.maplibregl-ctrl-group button + button {
-  border-top: 1px solid var(--color-line-2) !important;
-}
-.maplibregl-ctrl-group button span {
-  filter: invert(1) opacity(0.7);
-}
-.maplibregl-popup-content {
-  background: var(--color-panel-2) !important;
-  color: var(--color-fg) !important;
-  border: 1px solid var(--color-line-2);
-  border-radius: 6px !important;
-  padding: 8px 10px !important;
-  font-size: 12px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5) !important;
-}
-.maplibregl-popup-tip {
-  border-top-color: var(--color-panel-2) !important;
-  border-bottom-color: var(--color-panel-2) !important;
+input[type="range"].slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 999px;
+  background: var(--color-ink);
+  border: 3px solid var(--color-cream);
+  box-shadow: 0 0 0 1px rgb(23 19 14 / 0.35), 0 2px 6px rgb(23 19 14 / 0.25);
+  cursor: pointer;
 }
 
 .recharts-surface:focus,

@@ -48,13 +48,15 @@ export function inDays(n: number | null | undefined): string {
 }
 
 export const RISK_COLOR: Record<RiskLevel, string> = {
-  NORMAL: "#36c3b5",
-  WATCH: "#d6b65c",
-  PREPARE: "#f08d32",
-  ACT: "#e5484d",
+  NORMAL: "#7d9a5c",
+  WATCH: "#c4972f",
+  PREPARE: "#d0772c",
+  ACT: "#c2432b",
 };
 
 export const RISK_ORDER: Record<RiskLevel, number> = { NORMAL: 0, WATCH: 1, PREPARE: 2, ACT: 3 };
+
+export const RISK_WORD: Record<RiskLevel, string> = { NORMAL: "Normal", WATCH: "Watch", PREPARE: "Prepare", ACT: "Act" };
 
 export const RISK_MEANING: Record<RiskLevel, string> = {
   NORMAL: "Supply covers demand",
@@ -64,18 +66,31 @@ export const RISK_MEANING: Record<RiskLevel, string> = {
 };
 
 export const STATUS_COLOR: Record<SensorStatus, string> = {
-  ok: "#36c3b5",
-  stale: "#d6b65c",
-  offline: "#e5484d",
-  stuck: "#f08d32",
+  ok: "#7d9a5c",
+  stale: "#c4972f",
+  offline: "#c2432b",
+  stuck: "#d0772c",
 };
 
 export const GRADE_COLOR: Record<Grade, string> = {
-  HIGH: "#36c3b5",
-  MODERATE: "#d6b65c",
-  LOW: "#f08d32",
+  HIGH: "#7d9a5c",
+  MODERATE: "#c4972f",
+  LOW: "#d0772c",
 };
 
-export const WATER = "#36c3b5";
-export const WATER_2 = "#4ea9d8";
-export const SAND = "#cdb88c";
+export const INK = "#1c1712";
+export const CREAM = "#f6efe1";
+export const BEIGE = "#a3865a";
+
+export function compass(deg: number | null | undefined): string {
+  if (deg === null || deg === undefined) return "—";
+  const names = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+  return names[Math.round(((deg % 360) + 360) % 360 / 22.5) % 16];
+}
+
+export function fmtLong(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const d = parseDay(iso);
+  const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  return `${d.getUTCDate()} ${months[d.getUTCMonth()]}`;
+}
