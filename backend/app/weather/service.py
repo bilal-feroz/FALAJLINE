@@ -42,8 +42,12 @@ _lock = threading.Lock()
 _memory: dict[str, dict] = {}
 
 
+_LOC_SIG = "_".join(f"{loc['lat']:.3f}-{loc['lon']:.3f}" for loc in WEATHER_LOCATIONS)
+
+
 def _cache_path(day: date):
-    return CACHE_DIR / f"weather_{day.isoformat()}.json"
+    # the sampled coordinates are part of the key, so moving a location never reuses old data
+    return CACHE_DIR / f"weather_{day.isoformat()}_{_LOC_SIG}.json"
 
 
 def _read_cache(day: date) -> dict | None:

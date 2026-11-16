@@ -18,9 +18,10 @@ DATA_DIR = Path(__file__).resolve().parent / "data"
 OASIS_CENTER = {"lat": 24.2148, "lon": 55.7679}
 OASIS_ELEVATION_M = 292.0
 
-# Representative upstream recharge area: alluvial piedmont of the Hajar mountains east of Al Ain.
-# A point chosen to sample upstream weather, not a surveyed catchment boundary.
-RECHARGE_AREA = {"lat": 24.27, "lon": 55.98, "elevation_m": 520.0}
+# Representative upstream recharge area. EAD (2006) places the mother wells of the Al Ain aflaj east and
+# south-east of the city on the Al Jaww plain, in alluvium recharged from the Hajar mountains. This point
+# samples upstream weather there; it is not a surveyed catchment boundary.
+RECHARGE_AREA = {"lat": 24.21, "lon": 55.96, "elevation_m": 400.0}
 
 WEATHER_LOCATIONS = [
     {
@@ -34,7 +35,7 @@ WEATHER_LOCATIONS = [
     },
     {
         "id": "recharge",
-        "name": "Hajar piedmont recharge area (representative)",
+        "name": "Al Jaww plain recharge area (representative)",
         "role": "Upstream rainfall that can recharge the aquifer feeding the falaj",
         "lat": RECHARGE_AREA["lat"],
         "lon": RECHARGE_AREA["lon"],
@@ -58,8 +59,32 @@ ZONE_SEEDS = [
 ]
 
 # Conceptual falaj alignment: bearing and distance of the mother well from the point where the falaj surfaces.
-MOTHER_WELL_BEARING_DEG = 108.0
-TUNNEL_LENGTH_KM = 3.4
+# Documented Al Ain aflaj run 7-15 km from mother wells about 20 m deep (EAD 2006); the representative falaj
+# uses the shorter figure.
+MOTHER_WELL_BEARING_DEG = 100.0
+TUNNEL_LENGTH_KM = 7.0
+MOTHER_WELL_DEPTH_M = 20.0
+
+# Documented context shown in the UI (not model inputs).
+REFERENCE_FACTS = [
+    {"fact": "Al Ain Oasis covers about 120 ha (UNESCO World Heritage property 119.78 ha; this outline 116.6 ha).", "source": "UNESCO WHC 1343; OpenStreetMap"},
+    {"fact": "The oasis is fed by two Dawoodi-type aflaj, Al Aini and Al Daoudi, with mother wells east and south-east of the city on the Al Jaww plain.", "source": "EAD, Current Status of Aflaj in the Al Ain Area, 2006"},
+    {"fact": "Measured discharge in 1993: Al Aini 114 L/s, Al Daoudi 88 L/s. By 2006 roughly half or less of the flow was natural; the rest came from pumped wells and desalinated water.", "source": "EAD 2006 (citing NDC 1994)"},
+    {"fact": "Observation wells in the source area fell about 8 m between 1999 and 2005.", "source": "EAD 2006"},
+]
+GLOSSARY = {
+    "umm al-falaj": "mother well, where the tunnel taps the water table",
+    "thaqba": "vertical access shafts along the tunnel",
+    "shari'a": "the point where the falaj surfaces and water is first available",
+    "saqia": "surface channels carrying water to the palms",
+    "areef": "the falaj overseer who administers the timed water shares",
+}
+
+EAD_WELLS_URL = (
+    "https://arcgis.sdi.abudhabi.ae/agspublish/rest/services/OpenData/ADSDI_OpenData/MapServer/124/query"
+    "?where=1=1&geometry=55.60,24.10,56.00,24.32&geometryType=esriGeometryEnvelope&inSR=4326"
+    "&spatialRel=esriSpatialRelIntersects&outSR=4326&outFields=WELL,MEASFREQ&f=geojson"
+)
 
 
 def _project(lon: float, lat: float, lat0: float) -> tuple[float, float]:
@@ -163,7 +188,7 @@ def build_geography() -> dict:
     well = _offset(sharia[0], sharia[1], MOTHER_WELL_BEARING_DEG, TUNNEL_LENGTH_KM * 1000)
 
     shafts = []
-    n_shafts = 9
+    n_shafts = 13
     for k in range(1, n_shafts + 1):
         t = k / (n_shafts + 1)
         shafts.append([round(well[0] + t * (sharia[0] - well[0]), 6), round(well[1] + t * (sharia[1] - well[1]), 6)])
@@ -212,4 +237,8 @@ def build_geography() -> dict:
             "branch_heads": branch_heads,
         },
         "recharge_area": {**RECHARGE_AREA, "name": WEATHER_LOCATIONS[1]["name"], "provenance": "representative"},
+        "reference_facts": REFERENCE_FACTS,
+        "glossary": GLOSSARY,
+        "tunnel_length_km": TUNNEL_LENGTH_KM,
+        "mother_well_depth_m": MOTHER_WELL_DEPTH_M,
     }
