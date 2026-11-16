@@ -185,13 +185,14 @@ export default function OasisMap() {
       map.remove();
       mapRef.current = null;
       labelStore.clear();
+      setReady(false);
     };
   }, []);
 
   // push simulation state into the map whenever the timeline, scenario or data changes
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !ready) return;
+    if (!map || !ready || !map.getSource("zones")) return;
     (map.getSource("zones") as GeoJSONSource).setData(zonesFC(data, sc, day, selectedZone));
     (map.getSource("network") as GeoJSONSource).setData(networkFC(data, sc, day));
     (map.getSource("sensors") as GeoJSONSource).setData(sensorsFC(data));
@@ -208,7 +209,7 @@ export default function OasisMap() {
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !ready || !wells) return;
+    if (!map || !ready || !wells || !map.getSource("wells")) return;
     (map.getSource("wells") as GeoJSONSource).setData(
       fc(
         wells.wells.map((w) => ({
