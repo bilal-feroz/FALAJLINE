@@ -66,7 +66,9 @@ export function Intro() {
     );
   }
 
-  const b = beat >= 0 ? BEATS[beat] : null;
+  // without live Meteomatics access there is no evapotranspiration field on the map: say so, claim nothing
+  const offline = { ...BEATS[0], kicker: "United Arab Emirates", body: "Live evaporative demand from Meteomatics is drawn here when the weather feed is connected." };
+  const b = beat >= 0 ? (beat === 0 && !field?.available ? offline : BEATS[beat]) : null;
   const showLegend = t > 0.6 && t < 5.4 && field?.available;
   const uiAt = t >= INTRO.UI_AT;
   // a soft scrim keeps the titles legible as the camera comes down into the bright desert
