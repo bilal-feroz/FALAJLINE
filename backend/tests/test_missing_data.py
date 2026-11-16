@@ -72,6 +72,14 @@ def test_obscured_satellite_pass_is_unavailable_not_zero(now):
             assert all(0.3 < v < 0.9 for v in p["zones"].values())
 
 
+def test_losing_sensors_never_lowers_the_risk_level(now, demo_weather):
+    """Less data widens uncertainty and costs confidence, but it must not de-escalate a warning."""
+    _, _, healthy = _run(now, demo_weather, {})
+    for faults in ({"S-GW-01": "offline"}, {"S-GW-01": "offline", "S-FL-MAIN": "offline"}, {"S-GW-01": "stale"}):
+        _, _, degraded = _run(now, demo_weather, faults)
+        assert (degraded.risk[0] >= healthy.risk[0]).all(), faults
+
+
 # -- fallbacks ----------------------------------------------------------------
 def test_level_sensor_failure_falls_back_to_flume_then_to_last_known(now, demo_weather):
     _, healthy, f0 = _run(now, demo_weather, {})
@@ -137,13 +145,28 @@ def test_confidence_decays_with_lead_time(now, demo_weather):
 
 
 # -- noise and persistence ----------------------------------------------------
-def test_one_bad_reading_is_rejected_and_changes_nothing(now, demo_weather):
+def test_one_bad_reading_is_rejected_and_changes_nothing_material(now, demo_weather):
+    """A halved level reading and a 60% flume dip, each a single sample: rejected, and no warning moves."""
     _, clean, f_clean = _run(now, demo_weather, {})
     t, spiked, f_spiked = _run(now, demo_weather, {}, extra_outliers={"S-GW-01": [(2, 0.5)], "S-FL-MAIN": [(1, 0.4)]})
     assert t.sensors["S-GW-01"].rejected.sum() == 1
     assert abs(spiked.head_m - clean.head_m) < 0.005
     assert abs(spiked.trend_m_per_day - clean.trend_m_per_day) < 0.002
-    assert np.array_equal(f_spiked.risk, f_clean.risk)
+    assert np.array_equal(f_spiked.risk[0], f_clean.risk[0]), "the level issued today must not change"
+    assert np.abs(f_spiked.risk - f_clean.risk).max() <= 1
+    for z in range(len(P.zones)):
+        a, b = f_clean.first_shortfall_day(z), f_spiked.first_shortfall_day(z)
+        assert (a is None) == (b is None) and (a is None or abs(a - b) <= 1)
+
+
+def test_unfiltered_bad_reading_would_have_moved_the_estimate(now):
+    """Shows the filter is doing the work: the same spike left in the data shifts the fitted head."""
+    t = tel.generate(P, now, {}, extra_outliers={"S-GW-01": [(2, 0.5)]})
+    series = t.sensors["S-GW-01"]
+    k = int(np.flatnonzero(series.rejected)[-1])
+    filtered = estimate_state(t, P).head_m
+    series.values[k] = series.raw[k]  # put the rejected reading back
+    assert abs(estimate_state(t, P).head_m - filtered) > 0.005
 
 
 def test_built_in_outlier_is_reported(now):

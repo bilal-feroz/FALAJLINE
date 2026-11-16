@@ -250,14 +250,16 @@ def run_forecast(
 def _risk_levels(res: ForecastResult) -> np.ndarray:
     """Risk state per day and zone, as it would stand on that day if the forecast holds.
 
-    ACT      a shortfall within `act_window_days` is likely
-    PREPARE  a shortfall within `prepare_window_days` is plausible
+    ACT      a shortfall within `act_window_days` is likely (most ensemble runs, or the best estimate itself)
+    PREPARE  a shortfall within `prepare_window_days` is plausible (enough ensemble runs, or the best estimate)
     WATCH    deterioration is emerging: some chance within the horizon, or a thin and shrinking margin
     """
     r = res.params.risk
     d, n_z = res.p_short.shape
     central = res.central_ratio
     levels = np.zeros((d, n_z), dtype=int)
+    # First day the best-estimate run falls short, per zone (d = never within the horizon).
+    first_central = np.where(res.short[0].any(axis=0), res.short[0].argmax(axis=0), d)
     for day in range(d):
         p_act = res.p_within(day, r.act_window_days)
         p_prep = res.p_within(day, r.prepare_window_days)
@@ -267,6 +269,11 @@ def _risk_levels(res: ForecastResult) -> np.ndarray:
         lvl = np.where(p_any >= r.watch_probability, 1, np.where(thin, 1, 0))
         lvl = np.where(p_prep >= r.prepare_probability, 2, lvl)
         lvl = np.where(p_act >= r.act_probability, 3, lvl)
+        # The best estimate alone is enough to hold a level. Without this, losing a sensor would widen the
+        # ensemble, lower the probabilities and quietly de-escalate a warning: less data must never mean less alarm.
+        lead = first_central - day
+        lvl = np.where((lead >= 0) & (lead <= r.prepare_window_days), np.maximum(lvl, 2), lvl)
+        lvl = np.where((lead >= 0) & (lead <= r.act_window_days), 3, lvl)
         lvl = np.where(central[day] < r.required_supply_ratio, 3, lvl)  # best estimate is already short that day
         levels[day] = lvl
     return levels
