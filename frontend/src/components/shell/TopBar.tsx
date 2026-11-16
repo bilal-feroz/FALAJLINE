@@ -45,14 +45,14 @@ export function TopBar() {
 
   return (
     <header className="flex h-11 items-center gap-4 border-b border-line bg-panel px-4">
-      <div className="flex items-center gap-2.5">
+      <button onClick={() => useStore.getState().openIntro()} title="Replay the introduction" className="flex items-center gap-2.5">
         <svg width="22" height="14" viewBox="0 0 22 14" aria-hidden>
           <path d="M1 3h8c3 0 3 8 6 8h6" fill="none" stroke="var(--color-water)" strokeWidth="1.6" strokeLinecap="round" />
           <path d="M1 11h4" stroke="var(--color-sand)" strokeWidth="1.6" strokeLinecap="round" />
         </svg>
         <span className="font-mono text-[13px] font-medium tracking-[0.3em] text-fg">FALAJLINE</span>
         <span className="hidden whitespace-nowrap text-[12px] text-fg-3 2xl:inline">Al Ain Oasis · falaj early warning</span>
-      </div>
+      </button>
 
       <div className="ml-2 hidden min-w-0 items-center gap-2 overflow-hidden md:flex">
         <Source

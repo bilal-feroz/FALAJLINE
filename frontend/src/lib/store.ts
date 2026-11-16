@@ -17,7 +17,13 @@ interface Store {
   faults: Record<string, string> | null; // null = backend demo default
   settings: { demand_reduction: number; loss_reduction: number };
   selection: Selection | null;
+  intro: boolean; // opening sequence is on screen
+  introRun: number;
+  arrival: number; // set to introRun when the intro hands over to the twin
 
+  openIntro: () => void;
+  closeIntro: () => void;
+  introArrive: () => void;
   load: () => Promise<void>;
   setDay: (day: number) => void;
   setPlaying: (playing: boolean) => void;
@@ -50,6 +56,16 @@ export const useStore = create<Store>((set, get) => ({
   faults: null,
   settings: { demand_reduction: 0.15, loss_reduction: 0.45 },
   selection: null,
+  intro: false,
+  introRun: 0,
+  arrival: 0,
+
+  openIntro: () => set((s) => ({ intro: true, introRun: s.introRun + 1, playing: false })),
+  closeIntro: () => set({ intro: false }),
+  introArrive: () => {
+    const { introRun, arrival } = get();
+    if (arrival !== introRun) set({ arrival: introRun });
+  },
 
   load: async () => {
     const id = ++requestId;

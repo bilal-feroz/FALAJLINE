@@ -1,15 +1,20 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
 import { useStore } from "@/lib/store";
+import { Intro } from "./Intro";
 import { NavRail } from "./NavRail";
 import { Timeline } from "./Timeline";
 import { TopBar } from "./TopBar";
 
 const REFRESH_MS = 60_000; // server caches weather for hours; this only picks up new simulated readings
 const PLAY_STEP_MS = 850;
+const INTRO_KEY = "falajline:intro-seen";
 
 export function AppShell({ children }: { children: ReactNode }) {
+  const router = useRouter();
+  const intro = useStore((s) => s.intro);
   const status = useStore((s) => s.status);
   const error = useStore((s) => s.error);
   const weather = useStore((s) => s.data?.weather);
@@ -21,6 +26,38 @@ export function AppShell({ children }: { children: ReactNode }) {
     const id = setInterval(() => void load(), REFRESH_MS);
     return () => clearInterval(id);
   }, [load]);
+
+  // play the opening sequence once per browser session; it hands over to the digital twin
+  useEffect(() => {
+    try {
+      if (!window.sessionStorage.getItem(INTRO_KEY)) useStore.getState().openIntro();
+    } catch {
+      /* storage blocked: skip the intro */
+    }
+  }, []);
+  useEffect(() => {
+    if (intro) router.push("/twin");
+  }, [intro, router]);
+
+  const introLayer = intro ? (
+    <Intro
+      onDone={() => {
+        try {
+          window.sessionStorage.setItem(INTRO_KEY, "1");
+        } catch {
+          /* ignore */
+        }
+        useStore.getState().closeIntro();
+      }}
+    />
+  ) : null;
+
+  // while the backend is unreachable (for example, still starting), keep trying quietly
+  useEffect(() => {
+    if (status !== "error") return;
+    const id = setTimeout(() => void load(), 4000);
+    return () => clearTimeout(id);
+  }, [status, load]);
 
   useEffect(() => {
     if (!playing) return;
@@ -34,7 +71,9 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   if (status !== "ready") {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
+      <>
+        {introLayer}
+        <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
         <div className="font-mono text-[13px] tracking-[0.32em] text-fg">FALAJLINE</div>
         {status === "error" ? (
           <>
@@ -51,7 +90,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         ) : (
           <p className="text-xs text-fg-3">Reading weather, sensors and the 21-day forecast…</p>
         )}
-      </div>
+        </div>
+      </>
     );
   }
 
@@ -63,7 +103,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         : null;
 
   return (
-    <div className="grid h-full grid-cols-[60px_minmax(0,1fr)] grid-rows-[44px_auto_minmax(0,1fr)_auto]">
+    <>
+      {introLayer}
+      <div className="grid h-full grid-cols-[60px_minmax(0,1fr)] grid-rows-[44px_auto_minmax(0,1fr)_auto]">
       <div className="col-span-2">
         <TopBar />
       </div>
@@ -93,6 +135,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="col-span-2">
         <Timeline />
       </div>
-    </div>
+      </div>
+    </>
   );
 }
