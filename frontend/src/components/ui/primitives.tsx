@@ -72,7 +72,7 @@ export function Panel({
   bodyClassName?: string;
 }) {
   return (
-    <section className={`flex min-h-0 flex-col rounded-md border border-line bg-panel ${className}`}>
+    <section className={`flex min-h-0 flex-col overflow-hidden rounded-md border border-line bg-panel ${className}`}>
       {(title || right) && (
         <header className="flex h-8 shrink-0 items-center justify-between gap-2 border-b border-line px-3">
           <h2 className="label truncate text-fg-2">{title}</h2>

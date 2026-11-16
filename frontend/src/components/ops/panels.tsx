@@ -260,6 +260,7 @@ export function WeatherPanel() {
           <span className="num text-[10px] text-fg-3">{w.mode === "live" ? "Meteomatics" : "DEMO DATA"}</span>
         </>
       }
+      bodyClassName="overflow-y-auto"
     >
       <div className="grid grid-cols-2 divide-x divide-line border-b border-line">
         {w.locations.map((loc) => {
@@ -269,12 +270,12 @@ export function WeatherPanel() {
               <div className="truncate text-[11px] text-fg-2" title={`${loc.name} · ${loc.lat.toFixed(3)}°N ${loc.lon.toFixed(3)}°E · ${loc.role}`}>
                 {loc.id === "oasis" ? "Al Ain Oasis" : "Al Jaww recharge area"}
               </div>
-              <div className="num mt-0.5 text-[10px] text-fg-3">
-                {loc.lat.toFixed(3)}°N {loc.lon.toFixed(3)}°E
-              </div>
-              <div className="mt-1.5 flex items-baseline gap-1">
+              <div className="mt-1 flex items-baseline gap-1">
                 <span className="num text-[19px] leading-none text-fg">{fmt(d?.t_max_c, 0)}°</span>
                 <span className="num text-[11px] text-fg-3">/ {fmt(d?.t_min_c, 0)}°C</span>
+                <span className="num ml-auto text-[9.5px] text-fg-3">
+                  {loc.lat.toFixed(2)}°N {loc.lon.toFixed(2)}°E
+                </span>
               </div>
               <div className="num mt-1.5 grid grid-cols-2 gap-x-2 gap-y-0.5 text-[10.5px] text-fg-2">
                 <span>RH {fmt(d?.rh_mean_pct, 0)}%</span>

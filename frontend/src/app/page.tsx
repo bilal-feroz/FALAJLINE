@@ -30,7 +30,7 @@ export default function OperationsPage() {
         <div className="min-h-0 flex-1">
           <OasisMap />
         </div>
-        <div className="grid h-[176px] shrink-0 grid-cols-[minmax(0,1fr)_340px] gap-2.5">
+        <div className="grid h-[212px] shrink-0 grid-cols-[minmax(0,1fr)_340px] grid-rows-[minmax(0,1fr)] gap-2.5">
           <Panel
             title={`${zone ? `${zone.id} ${zone.name}` : "Whole oasis"} · supply against demand, L/s`}
             right={
