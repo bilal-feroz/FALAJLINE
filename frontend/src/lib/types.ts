@@ -139,8 +139,10 @@ export interface Sensor {
 
 export interface SatellitePass {
   time: string;
-  status: "valid" | "cloud_obscured";
+  status: "valid" | "partial" | "cloud_obscured";
   zones: Record<string, number | null>;
+  oasis: number | null;
+  scene_cloud_pct: number | null;
 }
 
 export interface Telemetry {
@@ -156,11 +158,15 @@ export interface Telemetry {
     id: string;
     provenance: Provenance;
     label: string;
+    source?: string;
+    licence?: string;
+    method?: string;
     note: string;
     revisit_days: number;
     passes: SatellitePass[];
     latest_valid_age_days: number | null;
     latest_status: string;
+    change_30d?: Record<string, number | null>;
   };
 }
 
@@ -172,6 +178,11 @@ export interface WeatherDay {
   t_min_c: number | null;
   rh_mean_pct: number | null;
   wind_mean_ms: number | null;
+  wind_dir_deg: number | null;
+  gust_max_ms: number | null;
+  cloud_pct: number | null;
+  prob_precip_pct: number | null;
+  soil_moisture_idx: number | null;
   rad_mean_w: number | null;
   precip_mm: number | null;
   evaporation_mm: number | null;
@@ -192,7 +203,17 @@ export interface WeatherLocation {
   lon: number;
   elevation_m: number;
   daily: WeatherDay[];
-  current: { time: string | null; t_c: number | null; rh_pct: number | null; wind_ms: number | null; rad_w: number | null; provenance: Provenance };
+  current: {
+    time: string | null;
+    t_c: number | null;
+    rh_pct: number | null;
+    wind_ms: number | null;
+    wind_dir_deg: number | null;
+    gust_ms: number | null;
+    cloud_pct: number | null;
+    rad_w: number | null;
+    provenance: Provenance;
+  };
 }
 
 export interface Weather {
@@ -280,38 +301,6 @@ export interface Warnings {
   notices: Notice[];
   persistence_rule: string;
   corroborated: boolean;
-}
-
-export interface QueueMessage {
-  id: string;
-  warning_id: string;
-  level: RiskLevel;
-  recipient: string;
-  number: string;
-  channel: string;
-  body: string;
-  body_ar: string | null;
-  status: string;
-  status_label: string;
-  group: "pending" | "retrying" | "delivered" | "failed";
-  attempts: number;
-  max_attempts: number;
-  created_at: number;
-  delivered_at: number | null;
-  last_error: string | null;
-  retry_in_s: number | null;
-  waiting_for_link: boolean;
-  history: { t: number; event: string }[];
-}
-
-export interface Queue {
-  simulated: boolean;
-  provider: string | null;
-  note: string;
-  link_online: boolean;
-  counts: Record<"pending" | "retrying" | "delivered" | "failed", number>;
-  messages: QueueMessage[];
-  server_time: number;
 }
 
 export interface GeoZone {
@@ -408,7 +397,7 @@ export interface Bundle {
   scenario_order: string[];
   comparison: ComparisonRow[];
   warnings: Warnings;
-  queue: Queue;
+  rain_history: RainHistory;
 }
 
 export interface EadWells {
@@ -420,3 +409,45 @@ export interface EadWells {
 }
 
 export type Selection = { type: "source" | "tunnel" | "main" | "branch" | "zone" | "sensor"; id: string };
+
+export interface RainLocation {
+  id: string;
+  name: string;
+  total_mm: number;
+  rain_days: number;
+  missing_days: number;
+  recharge_events: number;
+  last_recharge_event: { date: string; mm: number; days_ago: number } | null;
+  recent_events: { date: string; mm: number }[];
+  wettest_day: { date: string; mm: number } | null;
+  monthly: { month: string; mm: number }[];
+}
+
+export interface RainHistory {
+  available: boolean;
+  provenance: Provenance;
+  reason?: string;
+  source?: string;
+  threshold_mm?: number;
+  period?: { from: string; to: string };
+  locations?: RainLocation[];
+  retrieved_at?: string;
+}
+
+export interface WeatherField {
+  available: boolean;
+  reason?: string;
+  source?: string;
+  label?: string;
+  unit?: string;
+  day?: string;
+  lats: number[];
+  lons: number[];
+  values: (number | null)[][];
+  min: number | null;
+  max: number | null;
+  retrieved_at?: string;
+}
+
+export type Mode = "overview" | "forecast" | "alerts";
+export type CameraPreset = "system" | "oasis" | "source" | "zone" | "free";
