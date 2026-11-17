@@ -59,8 +59,16 @@ def _iso(dt: datetime) -> str:
     return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def _classify(status: int, body: str) -> MeteomaticsError:
-    detail = body.strip().replace("\n", " ")[:220]
+def _scrub(text: str, settings: Settings) -> str:
+    """Error text from the provider can quote the account; nothing about the credentials reaches a client."""
+    for secret in (settings.meteomatics_username, settings.meteomatics_password):
+        if secret:
+            text = text.replace(secret, "[account]")
+    return text
+
+
+def _classify(status: int, body: str, settings: Settings) -> MeteomaticsError:
+    detail = _scrub(body.strip().replace("\n", " ")[:220], settings)
     if status == 401:
         return MeteomaticsError("auth", "Meteomatics rejected the credentials (HTTP 401). Check METEOMATICS_USERNAME / METEOMATICS_PASSWORD.", status)
     if status == 403:
@@ -92,11 +100,11 @@ def _request(settings: Settings, path: str, transport: httpx.BaseTransport | Non
             continue
         elapsed = int((time.perf_counter() - t0) * 1000)
         if resp.status_code >= 500:
-            last = _classify(resp.status_code, resp.text)
+            last = _classify(resp.status_code, resp.text, settings)
             time.sleep(0.6 * (attempt + 1))
             continue
         if resp.status_code != 200:
-            raise _classify(resp.status_code, resp.text)
+            raise _classify(resp.status_code, resp.text, settings)
         return resp, elapsed
     assert last is not None
     raise last

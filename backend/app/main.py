@@ -1,7 +1,9 @@
 """FALAJLINE API. Run with:  uvicorn app.main:app --port 8000  (from the backend directory)."""
 from __future__ import annotations
 
+import hmac
 import json
+import os
 import time
 from datetime import datetime, timezone
 
@@ -98,10 +100,22 @@ def weather_history() -> dict:
     return get_history()
 
 
+def _refresh_allowed(request: Request) -> bool:
+    """A forced refresh spends the Meteomatics allowance, so on a public deployment it needs a token.
+    Locally (not on Vercel) it stays open for development."""
+    token = os.environ.get("FALAJLINE_REFRESH_TOKEN", "")
+    if token:
+        given = request.headers.get("authorization", "").removeprefix("Bearer ").strip()
+        return hmac.compare_digest(given, token)
+    return not os.environ.get("VERCEL")
+
+
 @app.post("/api/weather/refresh")
-def weather_refresh() -> dict:
+def weather_refresh(request: Request) -> dict:
     """Force a new Meteomatics query. Limited to one per minute to protect the daily allowance."""
     global _last_weather_refresh
+    if not _refresh_allowed(request):
+        raise HTTPException(status_code=403, detail="Forced refresh is disabled on the public deployment; data refreshes itself every few hours.")
     if time.time() - _last_weather_refresh < 60:
         raise HTTPException(status_code=429, detail="Weather was refreshed less than a minute ago.")
     _last_weather_refresh = time.time()

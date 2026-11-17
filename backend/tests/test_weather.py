@@ -218,3 +218,10 @@ def test_field_csv_matrix_is_parsed_north_first(now, isolated_cache):
     f = service.get_field(now, settings=LIVE, transport=httpx.MockTransport(lambda r: httpx.Response(200, text=csv)))
     assert f["available"] and f["lats"] == [22.45, 22.4] and f["lons"] == [51.4, 51.45, 51.5]
     assert f["values"] == [[4.3, 4.4, 4.5], [4.1, 4.2, None]] and f["min"] == 4.1 and f["max"] == 4.5
+
+
+def test_provider_error_text_never_carries_the_credentials():
+    """A 403 body that quotes the account must not reach the client with the account in it."""
+    err = meteomatics._classify(403, "User 'user' with password pass may not access soil_moisture", LIVE)
+    assert "'user'" not in err.message and "password pass " not in err.message
+    assert "[account]" in err.message
