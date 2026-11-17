@@ -44,6 +44,8 @@ Without credentials in `backend/.env` the app still runs, in a clearly labelled 
 | `METEOMATICS_BASE_URL` | Defaults to `https://api.meteomatics.com` |
 | `FALAJLINE_WEATHER_CACHE_TTL_S` | How long a weather response is reused (default 3 h) |
 | `FALAJLINE_FORCE_DEMO=1` | Ignore credentials and use demo weather |
+| `FALAJLINE_WEATHER_DAILY_BUDGET` | Most Meteomatics queries one server instance may make in a day (default 400; 150 on the public deployment) |
+| `FALAJLINE_REFRESH_TOKEN` | Optional. On a public deployment `POST /api/weather/refresh` is closed unless the request carries this bearer token |
 | `FALAJLINE_SIM_ANCHOR=YYYY-MM-DD` | Date the simulated scenario is anchored to (default: the day the server starts) |
 
 **Tests**
@@ -193,7 +195,7 @@ frontend/src/
 
 Two Vercel projects from this repository:
 
-- **Backend** (`backend/`, project `falajline-api`): Vercel detects FastAPI in `app/main.py` and serves it as one Python function. Set `METEOMATICS_USERNAME`, `METEOMATICS_PASSWORD` and `METEOMATICS_BASE_URL` in the project's environment variables; without them it serves labelled demo data. The cache uses the function's temp directory.
+- **Backend** (`backend/`, project `falajline-api`): Vercel detects FastAPI in `app/main.py` and serves it as one Python function. Set `METEOMATICS_USERNAME`, `METEOMATICS_PASSWORD` and `METEOMATICS_BASE_URL` in the project's environment variables as **sensitive**, Production-only values; without them it serves labelled demo data. The credentials stay on the server: they are sent only in the Authorization header to Meteomatics, and provider error text is scrubbed of them before it reaches a client. The cache uses the function's temp directory.
 - **Frontend** (`frontend/`, project `falajline`): set `FALAJLINE_BACKEND_URL` to the backend's URL; `/api/*` is proxied to it, so the browser never sees a credential.
 
 ## Sources
