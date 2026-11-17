@@ -1,10 +1,10 @@
 # FALAJLINE
 
-Early warning intelligence for the traditional falaj irrigation systems of Al Ain Oasis, UAE.
+The palms can't text you when they're thirsty. So we built the thing that does.
 
-**Live: https://falajline.vercel.app** · press **Present** in the top bar for the guided walkthrough.
+FALAJLINE is an early warning system for the falaj irrigation of Al Ain Oasis, UAE. It's a live digital twin of one falaj (the underground channel that has been carrying groundwater to these groves for centuries, no notes) that tells you which farm zone is about to run short of water, when, how sure it is, and what to do about it. Three weeks ahead. Before the farms find out the hard way.
 
-FALAJLINE shows an oasis water system approaching a shortage before the farms that depend on it feel it. It takes real weather and real geography, adds an explicitly simulated sensor network, runs a deterministic water-system model 21 days ahead, and turns the result into warnings that say who is affected, when, how sure we are, why, and what to do.
+**Live: https://falajline.vercel.app** The guided tour pops up right after the intro, every time. Hit **Present** in the top bar if you'd rather it just plays itself.
 
 ```
 real weather (Meteomatics)  ┐
@@ -12,9 +12,15 @@ real geography (OSM, EAD)   ├─►  state estimate ─► 21-day forecast ─
 simulated falaj telemetry   ┘         (deterministic model, 240-run assumption ensemble)
 ```
 
+## The lore
+
+Every day, the desert pulls water out of everything. Al Ain's aflaj are gravity-fed: a mother well up on the Al Jaww plain feeds a tunnel kilometres long, and the water just... flows downhill to the palms. Iconic. Zero electricity. Except when the well starts dropping, the farms at the end of the line are the last to know. Being the tail-end zone is not the main character experience.
+
+FALAJLINE fixes the "last to know" part. It takes real weather, real satellite data and real terrain, runs a water model three weeks forward, and turns the result into a warning that names the zone, the date and the fix.
+
 ## Run it
 
-Two processes: a Python API and a Next.js front end. Nothing else is required, and nothing is paid.
+Two processes: a Python API and a Next.js front end. That's it. Nothing paid, no Docker, no 47-step setup guide.
 
 **1. Backend** (Python 3.11+)
 
@@ -34,116 +40,118 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000. On Windows, `./start.ps1` in the repository root starts both in separate windows.
+Open http://localhost:3000. On Windows, `./start.ps1` in the repo root starts both in separate windows because we respect your time.
 
-Without credentials in `backend/.env` the app still runs, in a clearly labelled **DEMO DATA** mode with synthetic weather. Credentials are read only by the backend; the browser talks to the Next.js server, which proxies `/api/*` to FastAPI.
+No credentials in `backend/.env`? It still runs, in a very clearly labelled **DEMO DATA** mode with synthetic weather. We do not do fake live data here. The credentials only ever live on the backend; the browser talks to the Next.js server, which proxies `/api/*` to FastAPI. Your API key is not going on a field trip to the client.
 
-| Variable | Purpose |
+| Variable | What it does |
 |---|---|
-| `METEOMATICS_USERNAME`, `METEOMATICS_PASSWORD` | Meteomatics Weather API account |
+| `METEOMATICS_USERNAME`, `METEOMATICS_PASSWORD` | Your Meteomatics Weather API account |
 | `METEOMATICS_BASE_URL` | Defaults to `https://api.meteomatics.com` |
-| `FALAJLINE_WEATHER_CACHE_TTL_S` | How long a weather response is reused (default 3 h) |
-| `FALAJLINE_FORCE_DEMO=1` | Ignore credentials and use demo weather |
-| `FALAJLINE_WEATHER_DAILY_BUDGET` | Most Meteomatics queries one server instance may make in a day (default 400; 150 on the public deployment) |
-| `FALAJLINE_REFRESH_TOKEN` | Optional. On a public deployment `POST /api/weather/refresh` is closed unless the request carries this bearer token |
+| `FALAJLINE_WEATHER_CACHE_TTL_S` | How long a weather response gets reused (default 3 h) |
+| `FALAJLINE_FORCE_DEMO=1` | Ignore the credentials and use demo weather |
+| `FALAJLINE_WEATHER_DAILY_BUDGET` | Max Meteomatics queries per server instance per day (default 400; 150 on the public deployment). The quota is not a suggestion |
+| `FALAJLINE_REFRESH_TOKEN` | Optional. On a public deployment `POST /api/weather/refresh` is locked unless the request carries this bearer token, so randoms can't speedrun your allowance |
 | `FALAJLINE_SIM_ANCHOR=YYYY-MM-DD` | Date the simulated scenario is anchored to (default: the day the server starts) |
 
-**Tests**
+**Tests** (they pass, we checked)
 
 ```bash
-cd backend && .venv/Scripts/python -m pytest -q      # 60 tests, no network needed
+cd backend && .venv/Scripts/python -m pytest -q      # 64 tests, no network needed
 cd frontend && npx tsc --noEmit && npx eslint src && npm run build
 ```
 
-## What is real, what is simulated, what is modelled
+## What's real, what's simulated, what's modelled
 
-Every value in the interface carries one of these tags. Nothing simulated is presented as a measurement.
+Every number in the interface wears a tag saying where it came from. Nothing simulated gets to pretend it's a measurement. We have standards.
 
 | Tag | What it covers | Source |
 |---|---|---|
 | **OBSERVED** | Weather for Al Ain Oasis (24.217°N, 55.767°E) and the Al Jaww plain recharge area (24.21°N, 55.96°E): temperature, humidity, wind speed, direction and gusts, cloud, radiation, precipitation and its probability, soil moisture, evaporation, evapotranspiration; a year of rain at the recharge area; today's evapotranspiration on a 0.05° grid over the whole UAE | Meteomatics Weather API, live |
 | **OBSERVED** | Outline of Al Ain Oasis (116.6 ha; the UNESCO property is 119.78 ha) | OpenStreetMap way 96620970, ODbL |
-| **OBSERVED** | Outline of the UAE in the opening sequence | Natural Earth 1:50m, public domain |
+| **OBSERVED** | Outline of the UAE in the opening | Natural Earth 1:50m, public domain |
 | **OBSERVED** | Locations of groundwater monitoring wells around Al Ain | Environment Agency – Abu Dhabi public map service. IDs and positions only: the public layer has no water levels, so the wells are context, not model input |
-| **SIMULATED** | The falaj sensor network: mother-well level, main flume, three branch gauges, six zone outlets | Generated by a hidden scenario run through the same hydraulics, with noise, gaps, a bad reading and a developing leak |
-| **OBSERVED** | Canopy NDVI per farm zone, 49 passes since May 2026 | Sentinel-2 L2A scenes from Earth Search (AWS Open Data), cloud-masked with the scene classification layer; built by `backend/scripts/fetch_sentinel2.py`. It describes canopy only and is never read as a groundwater measurement |
+| **SIMULATED** | The falaj sensor network: mother-well level, main flume, three branch gauges, six zone outlets | Generated by a hidden scenario run through the same hydraulics, with noise, gaps, a bad reading and a developing leak. Realistic chaos, on purpose |
+| **OBSERVED** | Canopy NDVI per farm zone: 49 passes since May 2026, 48 of them cloud-free (the app charts the most recent 40) | Sentinel-2 L2A scenes from Earth Search (AWS Open Data), cloud-masked with the scene classification layer; built by `backend/scripts/fetch_sentinel2.py`. It describes the canopy only and is never read as a groundwater measurement, because satellites can't see underground (yet) |
 | **OBSERVED** | Satellite imagery and terrain of the twin | Sentinel-2 cloudless 2023 by EOX, Esri World Imagery (Maxar, Earthstar Geographics), SRTM elevation (AWS Terrain Tiles) |
 | **MODELLED** | Forecasts, demand, risk states, confidence, gap-filled values | The FALAJLINE model |
-| **CONCEPTUAL** | Farm-zone boundaries, falaj alignment, mother-well position, sensor positions, the 3D twin | A representative engineering reconstruction, not a survey of protected heritage infrastructure |
-| **UNAVAILABLE** | Anything missing | Shown as missing. Never replaced by a number |
+| **CONCEPTUAL** | Farm-zone boundaries, falaj alignment, mother-well position, sensor positions, the 3D twin | A representative engineering reconstruction, not a survey of protected heritage infrastructure. We did not go digging |
+| **UNAVAILABLE** | Anything missing | Shown as missing. Never quietly replaced by a number. Gaps stay gaps |
 
-The representative falaj is sized from documented figures: Al Ain's aflaj are Dawoodi type, 7–15 km long, fed from mother wells about 20 m deep on the Al Jaww plain, and measured 88–114 L/s in 1993 (EAD, *Current Status of Aflaj in the Al Ain Area*, 2006). Today those aflaj are largely supplemented by pumped wells and desalinated water, which this prototype does not model.
+The representative falaj is sized from documented figures: Al Ain's aflaj are Dawoodi type, 7–15 km long, fed from mother wells about 20 m deep on the Al Jaww plain, and measured 88–114 L/s in 1993 (EAD, *Current Status of Aflaj in the Al Ain Area*, 2006). These days those aflaj are mostly topped up by pumped wells and desalinated water, which this prototype does not model.
 
-## Opening sequence
+## The intro
 
-The app opens in orbit over a dark map of the UAE, painted with today's evapotranspiration from the Meteomatics grid. One continuous camera move descends to Al Ain and into the oasis; the surrounding city fades to an ink-on-cream atlas while the groves stay in true colour, the falaj draws itself in and water starts to flow. It plays once per browser session; Esc or Skip passes it and the FALAJLINE wordmark replays it.
+The app opens in orbit over a dark map of the UAE, painted with today's evapotranspiration from the Meteomatics grid. Then one continuous camera move dives down to Al Ain and into the oasis: the city fades to an ink-on-cream atlas, the groves stay in true colour, the falaj draws itself in and the water starts moving. Lowkey cinematic. It plays once per browser session; Esc or Skip if you're in a hurry, and the FALAJLINE wordmark replays it if you're not.
 
 ## The workspace
 
-One screen built around the digital twin of the oasis, its falaj and the six groves it feeds.
+One screen, built around the digital twin of the oasis, its falaj and the six groves it feeds.
 
-- **The twin.** Real imagery on real terrain. The oasis keeps its colour; each zone glows along its border in its risk colour; a sight-glass per zone shows supply against demand (the dark ring is 100%); water moves along the tunnel and channels at the forecast rate; palms are placed where the imagery shows canopy and dry out where supply falls short; cloud shadows and rain follow the forecast. Click a zone, a channel, a sensor or the mother well to inspect it.
-- **Overview** – system state, flow, margin and source head; the six zones; live weather with wind direction, ET₀ and the last recharge-capable rain upstream; data health with sensor faults you can trigger.
-- **Forecast** – history, forecast, P10–P90 and demand on one axis for the oasis or any zone, with three scenarios recomputed by the model as you move the sliders.
-- **Alerts** – each warning with its window, severity, confidence and reasons, the recommended response, an SMS preview in English and Arabic and a simulated delivery queue.
-- **Source** – the mother well's head, and a long section of the falaj from the elevation model: ground, tunnel and water table, with the wet stretch that shortens as the well recedes.
+- **The twin.** Real imagery on real terrain. The oasis keeps its colour; each zone glows along its border in its risk colour; a glass gauge per zone shows supply against demand (the dark ring is 100%, below it the farm is getting less than it needs); water moves through the tunnel and channels at the forecast rate; palms sit where the satellite sees canopy and dry out where supply falls short; cloud shadows and rain follow the forecast. Click a zone, a channel, a sensor or the mother well to inspect it.
+- **Overview**: system state, flow, margin and source level; the six zones; live weather with wind direction, ET₀ and the last rain big enough to actually recharge anything; data health, with sensor faults you can trigger yourself.
+- **Forecast**: history, forecast, P10–P90 and demand on one chart for the oasis or any zone, plus three scenarios the model recomputes as you drag the sliders.
+- **Alerts**: each warning with its window, severity, confidence and reasons, the recommended response, an SMS preview in English and Arabic, and a simulated delivery queue.
+- **Source**: the mother well's level, and a long section of the falaj from the elevation model (ground, tunnel, water table), with the wet stretch of tunnel shrinking as the well drops.
 
-A **21-day timeline** drives everything. Each column is a day and each of its rows a farm zone coloured by risk; press play and the gauges drain, the glows turn and the wet stretch shrinks. Scrubbing needs no API calls.
+A **21-day timeline** runs the whole show. Each column is a day and each row a farm zone coloured by risk; press play and the gauges drain, the glows turn red and the wet stretch shrinks. Scrubbing costs zero API calls.
 
-**Guided tour.** On every visit a twelve-step guide follows the opening (played, skipped or replayed): it spotlights each part of the screen and the places in the twin it talks about (the oasis, a zone, the mother well), opens the Forecast and Alerts views, and plays the timeline. It is always available from the **?** button.
+**Guided tour.** Every visit, right after the intro (played, skipped or replayed), a twelve-step guide walks you through it: it spotlights each part of the screen and the actual places in the twin it's talking about, opens the Forecast and Alerts views, and plays the timeline for you. It's always one click away on the **?** button.
 
-**Present** runs a scripted, data-driven walkthrough whose captions are read from the live forecast; it doubles as the script for a recording. URL switches: `?present` starts it, `?guide` opens the guided tour, `?skip` lands straight on the overview, `?intro` forces the opening.
+**Present** runs a scripted walkthrough with captions written from the live forecast. It's also the script the demo video was recorded from. URL switches: `?present` starts it, `?guide` opens the tour, `?skip` jumps straight to the overview, `?intro` forces the opening, `?film` hides the interface for recordings.
 
 ## The model
 
-Deterministic and explainable. No language model produces any number.
+Deterministic and explainable. No language model produces any number. Zero vibes-based forecasting.
 
-**Source.** The aquifer around the mother well is a linear reservoir. With `h` the water-table head above the tunnel invert:
+**Source.** The aquifer around the mother well is a linear reservoir. With `h` the water-table head above the tunnel floor:
 
 ```
 storage · dh/dt = N − C · h          falaj discharge  Q = C · h
 ```
 
-`C` (discharge per metre of head) and `storage` (specific yield × capture area) are assumptions. The net inflow `N` is inferred each run from the observed 7-day trend in the well level, so the forecast continues the recession the sensors actually show. Upstream rain adds recharge through a lag kernel, but only above a 5 mm threshold.
+`C` (discharge per metre of head) and `storage` (specific yield × capture area) are assumptions. The net inflow `N` is inferred each run from the observed 7-day trend in the well level, so the forecast continues the decline the sensors actually show. Upstream rain adds recharge through a lag kernel, but only above 5 mm, because a light drizzle in the desert recharges exactly nothing.
 
-**Network.** A falaj is gravity-fed: flow is set by the source, not by demand. Each day the discharge is routed mother well → tunnel → main channel → three branches → six zone outlets with a fractional seepage loss per kilometre and a capacity limit on each channel. Every litre is delivered, lost or spilled; the balance closes to rounding error and is shown on the Forecast view and asserted in the tests.
+**Network.** A falaj is gravity-fed: flow is set by the source, not by demand. The water does not care how thirsty you are. Each day the discharge is routed mother well → tunnel → main channel → three branches → six zone outlets, with seepage loss per kilometre and a capacity limit on each channel. Every litre is delivered, lost or spilled; the balance closes to rounding error, is shown on the Forecast view, and is asserted in the tests.
 
-**Demand.** FAO-56 crop demand per zone: `ET0 × Kc × canopy cover × area ÷ application efficiency`, less effective rain. ET0 comes from Meteomatics when available and is otherwise computed with FAO-56 Penman–Monteith (the implementation is checked against FAO's worked example and agrees with Meteomatics within about 5%). Demand uses the mean ET0 over a 7-day irrigation rotation.
+**Demand.** FAO-56 crop demand per zone: `ET0 × Kc × canopy cover × area ÷ application efficiency`, minus effective rain. ET0 comes from Meteomatics when available and is otherwise computed with FAO-56 Penman–Monteith (checked against FAO's own worked example, and within about 5% of Meteomatics). Demand uses the mean ET0 over a 7-day irrigation rotation.
 
-**State estimation and fallbacks.** Outliers are rejected against a rolling median. Head and trend come from the level sensor; if it is down they are inferred from the main flume; if both are down the last valid fit is carried forward with uncertainty growing by the hour. Each branch gets a mass balance (inflow against the sum of its outlets); a persistent shortfall is reported as suspected leakage and fed into the forecast.
+**State estimation and fallbacks.** Outliers get rejected against a rolling median. Level and trend come from the well sensor; if it's down, they're inferred from the main flume; if both are down, the last valid fit is carried forward with uncertainty growing by the hour. Each branch gets a mass balance (inflow against the sum of its outlets); a shortfall that keeps showing up is reported as a suspected leak and fed into the forecast.
 
-**Uncertainty.** 240 runs with a fixed seed vary storage, conductance, seepage, demand, the starting state and a weather error that grows with lead time. The P10–P90 band is a statement about those assumptions. It is not a validated error statistic.
+**Uncertainty.** 240 runs with a fixed seed vary storage, conductance, seepage, demand, the starting state and a weather error that grows with lead time. The P10–P90 band is a statement about those assumptions. It is not a validated error statistic, and we're not going to pretend it is.
 
 **Risk states**, per zone and day:
 
 | State | Meaning | Rule |
 |---|---|---|
-| WATCH | Deterioration is emerging | ≥ 20% of runs short within 21 days, or a thin and shrinking margin |
+| WATCH | Something's off | ≥ 20% of runs short within 21 days, or a thin and shrinking margin |
 | PREPARE | A shortfall is becoming plausible | ≥ 40% of runs short within 14 days, or the best estimate is |
-| ACT | Supply is likely to fall below the requirement | ≥ 60% of runs short within 7 days, or the best estimate is |
+| ACT | Supply is likely to fall below what the farms need | ≥ 60% of runs short within 7 days, or the best estimate is |
 
-A level is issued only after it has held for two consecutive daily evaluations, unless the well level and the main flume independently confirm the decline. One noisy reading cannot escalate a warning, and losing a sensor cannot de-escalate one.
+A level is issued only after it has held for two daily evaluations in a row, unless the well level and the main flume independently confirm the decline. One noisy reading can't escalate a warning, and losing a sensor can't quietly cancel one. No drama, no ghosting.
 
-**Confidence** is a data-quality index, not a probability. It starts from a ceiling of 75, because the model is not calibrated against measured falaj discharge, and loses itemised points for each missing, stale or substituted input and for lead time. The reasons are listed next to every warning.
+**Confidence** is a data-quality index, not a probability. It starts from a ceiling of 75, because the model hasn't been calibrated against measured falaj discharge, and loses itemised points for every missing, stale or substituted input and for lead time. The reasons are listed next to every warning, receipts included.
 
-**Scenarios.** Current operations, reduced demand, and improved channel efficiency are three runs of the same model. The sliders on the Forecast view send new values to the backend, which recomputes all three.
+**Scenarios.** Current operations, reduced demand and improved channel efficiency are three runs of the same model. The Forecast sliders send new values to the backend, which recomputes all three. Nothing is drawn by hand.
 
-All parameters live in [`backend/app/model/params.py`](backend/app/model/params.py) and are listed in the app under Forecast → Model and assumptions.
+Every parameter lives in [`backend/app/model/params.py`](backend/app/model/params.py) and is listed in the app under Forecast → Model and assumptions.
 
 ## Meteomatics integration
 
 - Endpoint `{base}/{start}--{end}:{step}/{parameters}/{lat,lon+lat,lon}/json` with HTTP basic auth.
-- Hourly: `t_2m:C`, `relative_humidity_2m:p`, `wind_speed_10m:ms`, `global_rad:W`, `wind_dir_10m:d`, `wind_gusts_10m_1h:ms`, `total_cloud_cover:p`. Daily: `precip_24h:mm`, `evaporation_24h:mm`, `evapotranspiration_24h:mm`, `prob_precip_24h:p`, `soil_moisture_index_-15cm:idx`. Optional groups fall back independently, so a rejected parameter never costs the core forecast.
-- A 365-day rain history at the recharge area finds the last recharge-capable event (5 mm or more), and a CSV grid of today's ET₀ at 0.05° over the UAE (8,505 points) paints the opening map.
-- Hourly and daily queries run in parallel. Responses are cached (3 h forecast, 6 h grid, 12 h history), so normal use stays far below the 1,000-query allowance, and a local budget stops calls before it is reached.
-- Invalid credentials, rate limits, network errors, rejected parameters and missing values are each handled and shown. A failed refresh serves the last good response marked stale; with nothing cached the app switches to labelled demo data and shows the error. Live data is never fabricated.
+- Hourly: `t_2m:C`, `relative_humidity_2m:p`, `wind_speed_10m:ms`, `global_rad:W`, `wind_dir_10m:d`, `wind_gusts_10m_1h:ms`, `total_cloud_cover:p`. Daily: `precip_24h:mm`, `evaporation_24h:mm`, `evapotranspiration_24h:mm`, `prob_precip_24h:p`, `soil_moisture_index_-15cm:idx`. Optional groups fall back independently, so one rejected parameter never takes down the core forecast.
+- A 365-day rain history at the recharge area finds the last rain that could actually recharge the aquifer (5 mm or more), and a CSV grid of today's ET₀ at 0.05° over the UAE (8,505 points) paints the opening map.
+- Hourly and daily queries run in parallel. Responses are cached (3 h forecast, 6 h grid, 12 h history), so normal use stays far below the 1,000-query allowance, and a local budget stops calls before it's reached.
+- Bad credentials, rate limits, network errors, rejected parameters and missing values are each handled and shown on screen. A failed refresh serves the last good response marked stale; with nothing cached the app switches to labelled demo data and tells you why. Live data is never fabricated. Ever.
+- Error text from the provider is scrubbed of the account name and password before it can reach a visitor.
 
 ## API
 
 | Endpoint | Returns |
 |---|---|
 | `GET /api/state` | Everything the UI needs: weather, telemetry, state, three scenario forecasts, warnings, rain history |
-| `GET /api/weather`, `POST /api/weather/refresh` | Weather bundle; forced refresh (at most once a minute) |
+| `GET /api/weather` | The weather bundle |
+| `POST /api/weather/refresh` | Forced refresh. Locally: at most once a minute. Public deployment: locked unless you have the refresh token |
 | `GET /api/weather/field` | Today's ET₀ on a 0.05° grid over the UAE |
 | `GET /api/weather/history` | A year of rain at both locations and the last recharge-capable event |
 | `GET /api/telemetry?faults=S-GW-01:offline` | Simulated sensor network, state estimate, confidence |
@@ -153,27 +161,27 @@ All parameters live in [`backend/app/model/params.py`](backend/app/model/params.
 | `GET /api/network` | Geography, topology and every model parameter |
 | `GET /api/geo/ead-wells` | EAD monitoring-well locations |
 
-Interactive documentation is at http://localhost:8000/docs.
+Interactive docs live at http://localhost:8000/docs.
 
-## A two-minute walkthrough
+## The two-minute speedrun
 
-Press **Present** and it plays by itself, or:
+Follow the guided tour, press **Present** and let it cook, or do it yourself:
 
-1. **Let the opening play.** UAE evapotranspiration from orbit, down to Al Ain, into the oasis.
+1. **Let the intro play.** UAE evapotranspiration from orbit, down to Al Ain, into the oasis.
 2. **Overview.** The system state is ACT: the first zone falls below demand within a week. Weather is live from Meteomatics; telemetry is marked simulated; canopy NDVI is real Sentinel-2.
-3. **Press play on the timeline.** Gauges drain, borders turn from sage to terracotta from the tail ends inward, palms dry, the flow in the tunnel thins.
-4. **Click the mother well.** The long section shows the wet stretch of tunnel shrinking as the head falls.
-5. **Forecast.** Move the demand slider and watch all three scenarios recompute.
-6. **Alerts.** Open the ACT warning: window, confidence with reasons, a redistribution whose effect was computed by re-running the model, and the SMS in English and Arabic. Take the gateway offline to see messages held and retried.
-7. **Data health.** Take `S-GW-01` offline: the head is inferred from the flume, confidence drops, the warning holds.
+3. **Press play on the timeline.** Gauges drain, borders turn from sage to terracotta from the tail ends inward, palms dry out, the flow in the tunnel thins. It's giving drought arc.
+4. **Click the mother well.** The long section shows the wet stretch of tunnel shrinking as the level falls.
+5. **Forecast.** Drag the demand slider and watch all three scenarios recompute.
+6. **Alerts.** Open the ACT warning: window, confidence with reasons, a redistribution whose effect was computed by re-running the model, and the SMS in English and Arabic. Take the gateway offline to watch messages get held and retried.
+7. **Data health.** Take `S-GW-01` offline: the level is inferred from the flume, confidence drops, and the warning holds. It does not fold under pressure.
 
-## Limits
+## Limits (we're being honest)
 
 - The falaj telemetry is simulated. The model is uncalibrated and has never been compared with measured discharge.
 - The network, zones and mother-well position are representative, not surveyed.
-- The model ignores the pumped-well and desalinated supplements that sustain Al Ain's aflaj today.
-- Canopy NDVI is real but baked at build time; a scheduled job would refresh it in production.
-- SMS delivery is simulated. No message leaves the machine.
+- The model ignores the pumped wells and desalinated water that keep Al Ain's aflaj going today.
+- Canopy NDVI is real but baked in at build time; a scheduled job would refresh it in production.
+- SMS delivery is simulated. No message leaves the machine. No farmer was texted in the making of this project.
 
 ## Layout
 
@@ -184,23 +192,23 @@ backend/app/
   engine.py     assembles one consistent state bundle
   main.py       FastAPI endpoints, gzip, CDN cache headers
 backend/scripts/ Sentinel-2 NDVI builder
-backend/tests/  water balance, forecast, scenarios, missing data, weather failures
+backend/tests/  water balance, forecast, scenarios, missing data, weather failures, API safety
 frontend/src/
   twin/         the 3D twin: terrain, imagery, network, gauges, palms, camera, labels, opening
-  components/   workspace, top bar, timeline, panels, intro, presentation, charts
+  components/   workspace, top bar, timeline, panels, intro, guided tour, presentation, charts
   lib/          API types, store, simulated delivery queue, formatting
 ```
 
 ## Deployment
 
-Two Vercel projects from this repository:
+Two Vercel projects from this one repo:
 
-- **Backend** (`backend/`, project `falajline-api`): Vercel detects FastAPI in `app/main.py` and serves it as one Python function. Set `METEOMATICS_USERNAME`, `METEOMATICS_PASSWORD` and `METEOMATICS_BASE_URL` in the project's environment variables as **sensitive**, Production-only values; without them it serves labelled demo data. The credentials stay on the server: they are sent only in the Authorization header to Meteomatics, and provider error text is scrubbed of them before it reaches a client. The cache uses the function's temp directory.
-- **Frontend** (`frontend/`, project `falajline`): set `FALAJLINE_BACKEND_URL` to the backend's URL; `/api/*` is proxied to it, so the browser never sees a credential.
+- **Backend** (`backend/`, project `falajline-api`): Vercel detects FastAPI in `app/main.py` and serves it as one Python function. Set `METEOMATICS_USERNAME`, `METEOMATICS_PASSWORD` and `METEOMATICS_BASE_URL` in the project's environment variables as **sensitive**, Production-only values; without them it serves labelled demo data. The credentials never leave the server: they're sent only in the Authorization header to Meteomatics. The cache uses the function's temp directory.
+- **Frontend** (`frontend/`, project `falajline`): set `FALAJLINE_BACKEND_URL` to the backend's URL. `/api/*` is proxied to it, so the browser never sees a credential.
 
 ## Sources
 
-- Meteomatics Weather API – https://www.meteomatics.com/en/api/getting-started/
+- Meteomatics Weather API: https://www.meteomatics.com/en/api/getting-started/
 - Environment Agency – Abu Dhabi, *Current Status of Aflaj in the Al Ain Area* (2006), and the EAD groundwater monitoring wells layer on the Abu Dhabi spatial data infrastructure
 - UNESCO World Heritage List 1343, *Cultural Sites of Al Ain*
 - Allen et al., *Crop evapotranspiration*, FAO Irrigation and Drainage Paper 56
