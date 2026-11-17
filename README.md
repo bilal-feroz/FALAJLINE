@@ -90,7 +90,7 @@ One screen built around the digital twin of the oasis, its falaj and the six gro
 
 A **21-day timeline** drives everything. Each column is a day and each of its rows a farm zone coloured by risk; press play and the gauges drain, the glows turn and the wet stretch shrinks. Scrubbing needs no API calls.
 
-**Guided tour.** On the first visit a twelve-step guide follows the opening: it spotlights each part of the screen and the places in the twin it talks about (the oasis, a zone, the mother well), opens the Forecast and Alerts views, and plays the timeline. It is always available from the **?** button.
+**Guided tour.** On every visit a twelve-step guide follows the opening (played, skipped or replayed): it spotlights each part of the screen and the places in the twin it talks about (the oasis, a zone, the mother well), opens the Forecast and Alerts views, and plays the timeline. It is always available from the **?** button.
 
 **Present** runs a scripted, data-driven walkthrough whose captions are read from the live forecast; it doubles as the script for a recording. URL switches: `?present` starts it, `?guide` opens the guided tour, `?skip` lands straight on the overview, `?intro` forces the opening.
 

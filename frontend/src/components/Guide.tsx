@@ -14,24 +14,6 @@ import { Prov } from "./ui";
  * sees it. Replayable from the ? button in the top bar.
  */
 
-const SEEN = "falajline:guided";
-
-export function wasGuided() {
-  try {
-    return window.localStorage.getItem(SEEN) === "1";
-  } catch {
-    return false;
-  }
-}
-
-function markGuided() {
-  try {
-    window.localStorage.setItem(SEEN, "1");
-  } catch {
-    /* storage blocked: the guide simply offers itself again next time */
-  }
-}
-
 type P3 = [number, number, number];
 /** What a step singles out: nothing (centred card), an element of the interface, or a place in the twin. */
 type Target = { kind: "none" } | { kind: "dom"; sel: string; pad?: number } | { kind: "world"; pts: P3[]; pad?: number };
@@ -332,7 +314,6 @@ export function Guide() {
   const last = guide.step >= steps.length - 1;
 
   const close = () => {
-    markGuided();
     setGuide({ open: false, step: 0 });
     st().setPlaying(false);
     st().setDay(0);

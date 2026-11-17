@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { useEffect } from "react";
 import { useStore } from "@/lib/store";
 import { setAppState } from "@/twin/CameraRig";
-import { Guide, wasGuided } from "./Guide";
+import { Guide } from "./Guide";
 import { Intro } from "./Intro";
 import { AlertsPanel } from "./panels/AlertsPanel";
 import { ForecastSheet } from "./panels/ForecastSheet";
@@ -67,15 +67,15 @@ export function Workspace() {
     if (params.has("present")) setTimeout(() => useStore.getState().setTour({ running: true, step: 0 }), seen ? 800 : 14500);
   }, [intro, status, assets.dem, assets.far, field]);
 
-  // first visit: once the opening has landed, offer the guided tour (?guide forces it)
+  // every visit: the guided tour is the first thing after the opening (played, skipped or replayed).
+  // Only the hands-free modes go without it: ?present runs its own scripted story, ?film is for recordings.
   useEffect(() => {
     if (intro !== "done") return;
     const params = new URLSearchParams(window.location.search);
-    const force = params.has("guide");
-    if (!force && (wasGuided() || params.has("skip") || params.has("present") || params.has("film"))) return;
+    if (params.has("present") || params.has("film")) return;
     const id = setTimeout(() => {
       if (!useStore.getState().tour.running) useStore.getState().setGuide({ open: true, step: 0 });
-    }, force ? 300 : 900);
+    }, 120);
     return () => clearTimeout(id);
   }, [intro]);
 
