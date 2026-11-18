@@ -1,5 +1,8 @@
 "use client";
 
+// App state (zustand): the data bundle, selection, timeline day, scenario settings, simulated sensor faults,
+// camera moves, the delivery queue, the guide and the presentation.
+
 import { create } from "zustand";
 import { retryMessage, stepQueue, syncQueue, type QueueState } from "./queue";
 import type { Profile } from "@/twin/section";
