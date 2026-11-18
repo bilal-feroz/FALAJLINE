@@ -19,6 +19,11 @@ const TwinScene = dynamic(() => import("@/twin/Scene"), { ssr: false });
 
 const SEEN = "falajline:intro-seen";
 
+/**
+ * The single app screen: the 3D twin behind everything, the opening sequence, then the top bar, the panel for
+ * the current mode, the inspector and the timeline. URL flags: ?skip skips the opening, ?intro replays it,
+ * ?present runs the presentation and ?film hides the interface for recordings.
+ */
 export function Workspace() {
   const status = useStore((s) => s.status);
   const error = useStore((s) => s.error);
