@@ -62,6 +62,7 @@ def _state(faults: str | None, demand_reduction: float, loss_reduction: float) -
 
 @app.get("/api/health")
 def health() -> dict:
+    """Liveness check: weather mode, today's Meteomatics query count and the telemetry source. No credentials."""
     return {
         "status": "ok",
         "time": datetime.now(timezone.utc).isoformat(),
