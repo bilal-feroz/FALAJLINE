@@ -1,3 +1,4 @@
+// Chart series: simulated sensor history joined to the forecast (central line and P10-P90 band), against demand.
 import { fmtDay } from "./format";
 import type { Bundle, ScenarioForecast, Sensor } from "./types";
 
