@@ -33,6 +33,10 @@ function Kpi({ label, value, unit, sub, prov, accent }: { label: string; value: 
   );
 }
 
+/**
+ * Overview: the system on the selected day, supply against demand for each zone, the weather, upstream recharge
+ * and data health, where sensors can be knocked out to watch confidence respond.
+ */
 export function Overview() {
   const data = useStore((s) => s.data)!;
   const sc = useScenario()!;
