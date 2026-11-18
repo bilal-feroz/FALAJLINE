@@ -19,6 +19,8 @@ next-env.d.ts
 
 # misc
 .DS_Store
+Thumbs.db
+desktop.ini
 *.log
 
 # Vercel project links
