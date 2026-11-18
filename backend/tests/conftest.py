@@ -1,3 +1,5 @@
+"""Shared test setup: a fixed clock and a pinned simulated-telemetry anchor, so results never depend on
+the day the tests run."""
 from __future__ import annotations
 
 import sys
