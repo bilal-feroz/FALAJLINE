@@ -14,6 +14,7 @@ const PROV: Record<string, { text: string; title: string; cls: string }> = {
   representative: { text: "Repr", title: "A representative location, not a surveyed boundary", cls: "text-beige-2 border border-dashed border-beige-2/60" },
 };
 
+/** Provenance tag beside a number (Live, Obs, Sim, Model, N/A, Concept, Repr), with a tooltip saying what it means. */
 export function Prov({ kind, className = "" }: { kind: Provenance | "live" | string; className?: string }) {
   const p = PROV[kind] ?? PROV.modelled;
   return (
