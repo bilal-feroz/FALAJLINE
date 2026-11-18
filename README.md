@@ -149,6 +149,7 @@ Every parameter lives in [`backend/app/model/params.py`](backend/app/model/param
 
 | Endpoint | Returns |
 |---|---|
+| `GET /api/health` | Liveness check: weather mode, today's Meteomatics query count, telemetry source |
 | `GET /api/state` | Everything the UI needs: weather, telemetry, state, three scenario forecasts, warnings, rain history |
 | `GET /api/weather` | The weather bundle |
 | `POST /api/weather/refresh` | Forced refresh. Locally: at most once a minute. Public deployment: locked unless you have the refresh token |
