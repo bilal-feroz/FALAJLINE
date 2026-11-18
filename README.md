@@ -190,6 +190,7 @@ Follow the guided tour, press **Present** and let it cook, or do it yourself:
 ```
 backend/app/
   weather/      Meteomatics client (point series, grid, history), cache, labelled demo fallback
+  data/         oasis geometry (GeoJSON) and the Sentinel-2 NDVI series
   model/        params, hydraulics, et0, telemetry, state, forecast, confidence, warnings
   engine.py     assembles one consistent state bundle
   main.py       FastAPI endpoints, gzip, CDN cache headers
