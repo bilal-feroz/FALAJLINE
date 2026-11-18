@@ -114,6 +114,10 @@ function steps(): Step[] {
   ];
 }
 
+/**
+ * Presentation mode (the Present button or ?present): a hands-free story that drives the camera, timeline,
+ * scenarios and sensor faults, with a caption for each beat.
+ */
 export function Tour() {
   const tour = useStore((s) => s.tour);
   const setTour = useStore((s) => s.setTour);
