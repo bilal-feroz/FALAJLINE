@@ -1,3 +1,4 @@
+# Local development: the API server (uvicorn) and the test suite (pytest).
 -r requirements.txt
 uvicorn[standard]>=0.30
 pytest>=8.0
