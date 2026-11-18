@@ -232,6 +232,10 @@ function Detail({ w }: { w: Warning }) {
   );
 }
 
+/**
+ * Alerts: the warning list and, for the open warning, its window, severity, confidence, recommended response
+ * and the message to farm operators, with a simulated delivery queue. Nothing is sent.
+ */
 export function AlertsPanel() {
   const data = useStore((s) => s.data)!;
   const alertId = useStore((s) => s.alertId);
