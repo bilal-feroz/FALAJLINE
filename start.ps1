@@ -1,4 +1,5 @@
 # Starts the FALAJLINE backend and frontend in two PowerShell windows.
+# Needs Python 3.11+ and Node 20+ on the PATH. Meteomatics credentials go in backend\.env (see backend\.env.example).
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 if (-not (Test-Path "$root\backend\.venv")) {
