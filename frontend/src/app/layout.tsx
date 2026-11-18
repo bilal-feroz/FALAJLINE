@@ -1,3 +1,4 @@
+// Root layout: the three typefaces (Geist, Geist Mono, Instrument Serif), page metadata and the theme colour.
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
 import "./globals.css";
