@@ -34,6 +34,7 @@ function Source({ dot, label, value, title }: { dot: string; label: string; valu
   );
 }
 
+/** Top bar: the mark, the mode switch, each data source with its freshness, the clock in Gulf time, Present and help. */
 export function TopBar() {
   const data = useStore((s) => s.data)!;
   const mode = useStore((s) => s.mode);
