@@ -19,6 +19,7 @@ function Item({ prov, title, children }: { prov: string; title: string; children
   );
 }
 
+/** Data and method: what is real, what is simulated and what is modelled, input by input, and the limits. */
 export function MethodSheet() {
   const open = useStore((s) => s.methodOpen);
   const setOpen = useStore((s) => s.setMethodOpen);
