@@ -14,6 +14,7 @@ const BEATS = [
   { from: 9.9, to: 12.2, kicker: "Falajline", title: "See the shortage before the farms do.", body: "A digital twin of one falaj, its source, its channels and the six groves it feeds." },
 ];
 
+/** The opening: titles over a camera flight from the UAE evaporation map down to the oasis, then the workspace. */
 export function Intro() {
   const intro = useStore((s) => s.intro);
   const status = useStore((s) => s.status);
