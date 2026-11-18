@@ -214,6 +214,7 @@ function ChannelBody({ id, sc }: { id: string; sc: ScenarioForecast }) {
   );
 }
 
+/** Inspector: details for what is selected in the twin (a farm zone, the source, a branch or a sensor). */
 export function Inspector() {
   const selection = useStore((s) => s.selection);
   const select = useStore((s) => s.select);
