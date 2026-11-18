@@ -52,6 +52,7 @@ No credentials in `backend/.env`? It still runs, in a very clearly labelled **DE
 | `FALAJLINE_FORCE_DEMO=1` | Ignore the credentials and use demo weather |
 | `FALAJLINE_WEATHER_DAILY_BUDGET` | Max Meteomatics queries per server instance per day (default 400; 150 on the public deployment). The quota is not a suggestion |
 | `FALAJLINE_REFRESH_TOKEN` | Optional. On a public deployment `POST /api/weather/refresh` is locked unless the request carries this bearer token, so randoms can't speedrun your allowance |
+| `FALAJLINE_CACHE_DIR` | Where weather responses are cached (default `backend/.cache`, or the temp folder on Vercel) |
 | `FALAJLINE_SIM_ANCHOR=YYYY-MM-DD` | Date the simulated scenario is anchored to (default: the day the server starts) |
 
 **Tests** (they pass, we checked)
