@@ -32,6 +32,10 @@ function Slider({ label, hint, value, max, onCommit }: { label: string; hint: st
   );
 }
 
+/**
+ * Forecast: water availability for the oasis or the selected zone, the scenarios re-run by the same model,
+ * and sliders for demand reduction and channel seepage.
+ */
 export function ForecastSheet() {
   const data = useStore((s) => s.data)!;
   const sc = useScenario()!;
