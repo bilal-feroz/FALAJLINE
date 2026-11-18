@@ -1,3 +1,5 @@
+// Display helpers: dates and clock times in Gulf time, numbers, relative days, and the colours and words
+// for risk levels and sensor states.
 import type { Grade, RiskLevel, SensorStatus } from "./types";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
